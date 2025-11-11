@@ -7,6 +7,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { PartDetailsDialog } from "./PartDetailsDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Part {
   id: string;
@@ -50,6 +60,7 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedPart, setSelectedPart] = useState<Part | null>(null);
+  const [partToDelete, setPartToDelete] = useState<string | null>(null);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -102,11 +113,11 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
     });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Biztosan törölni szeretnéd ezt az alkatrészt?")) return;
+  const handleDelete = async () => {
+    if (!partToDelete) return;
 
     try {
-      const { error } = await supabase.from("parts").delete().eq("id", id);
+      const { error } = await supabase.from("parts").delete().eq("id", partToDelete);
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["parts"] });
@@ -120,6 +131,8 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
         description: error.message,
         variant: "destructive"
       });
+    } finally {
+      setPartToDelete(null);
     }
   };
 
@@ -201,7 +214,7 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
                       <Button variant="ghost" size="icon" onClick={() => onEdit(part)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(part.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => setPartToDelete(part.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -218,6 +231,21 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
         open={!!selectedPart} 
         onOpenChange={(open) => !open && setSelectedPart(null)} 
       />
+
+      <AlertDialog open={!!partToDelete} onOpenChange={(open) => !open && setPartToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Biztosan törölni szeretnéd?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ez a művelet nem vonható vissza. Az alkatrész véglegesen törlődik az adatbázisból.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Mégse</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Törlés</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

@@ -58,9 +58,10 @@ export const TaskFilters = ({
           <SelectContent>
             <SelectItem value="all">Összes státusz</SelectItem>
             <SelectItem value="terv">Terv</SelectItem>
-            <SelectItem value="folyamatban">Folyamatban</SelectItem>
+            <SelectItem value="gyartas_alatt">Gyártás alatt</SelectItem>
             <SelectItem value="kesz">Kész</SelectItem>
-            <SelectItem value="elvetve">Elvetve</SelectItem>
+            <SelectItem value="jovahagyasra_var">Jóváhagyásra vár</SelectItem>
+            <SelectItem value="elutasitva">Elutasítva</SelectItem>
           </SelectContent>
         </Select>
       </div>
