@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 interface Part {
   id: string;
@@ -44,21 +44,13 @@ interface TaskFormProps {
 export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [department, setDepartment] = useState(part?.department || "");
   const [name, setName] = useState(part?.name || "");
-  const [description, setDescription] = useState(part?.description || "");
   const [manufacturedPurchased, setManufacturedPurchased] = useState(part?.manufactured_purchased || "gyartott");
   const [manufacturingType, setManufacturingType] = useState(part?.manufacturing_type || "");
   const [material, setMaterial] = useState(part?.material || "");
   const [responsiblePerson, setResponsiblePerson] = useState(part?.responsible_person || "");
   const [responsibleCompany, setResponsibleCompany] = useState(part?.responsible_company || "");
   const [approver, setApprover] = useState(part?.approver || "");
-  const [designer, setDesigner] = useState(part?.designer || "");
   const [status, setStatus] = useState(part?.status || "terv");
-  const [system, setSystem] = useState(part?.system || "");
-  const [assembly, setAssembly] = useState(part?.assembly || "");
-  const [subAssembly, setSubAssembly] = useState(part?.sub_assembly || "");
-  const [quantity, setQuantity] = useState(part?.quantity?.toString() || "1");
-  const [costPerPart, setCostPerPart] = useState(part?.cost_per_part?.toString() || "");
-  const [emissionsPerPart, setEmissionsPerPart] = useState(part?.emissions_per_part?.toString() || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const queryClient = useQueryClient();
@@ -81,30 +73,16 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Nincs bejelentkezett felhasználó");
 
-      const qty = parseInt(quantity) || 1;
-      const costPP = costPerPart ? parseFloat(costPerPart) : null;
-      const emissionsPP = emissionsPerPart ? parseFloat(emissionsPerPart) : null;
-
       const partData = {
         department,
         name,
-        description,
         manufactured_purchased: manufacturedPurchased,
         manufacturing_type: manufacturingType || null,
         material: material || null,
         responsible_person: responsiblePerson || null,
         responsible_company: responsibleCompany || null,
         approver: approver || null,
-        designer: designer || null,
         status,
-        system: system || null,
-        assembly: assembly || null,
-        sub_assembly: subAssembly || null,
-        quantity: qty,
-        cost_per_part: costPP,
-        cost_sum: costPP ? costPP * qty : null,
-        emissions_per_part: emissionsPP,
-        emissions_sum: emissionsPP ? emissionsPP * qty : null,
       };
 
       if (part) {
@@ -150,241 +128,121 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="basic">Alapadatok</TabsTrigger>
-          <TabsTrigger value="manufacturing">Gyártás</TabsTrigger>
-          <TabsTrigger value="cost">Költség & Emissziók</TabsTrigger>
-        </TabsList>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="department">Részleg *</Label>
+          <Select value={department} onValueChange={setDepartment} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Válassz részleget..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Aero">Aero</SelectItem>
+              <SelectItem value="Elektronika">Elektronika</SelectItem>
+              <SelectItem value="Futómű">Futómű</SelectItem>
+              <SelectItem value="Motor">Motor</SelectItem>
+              <SelectItem value="Váz">Váz</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <TabsContent value="basic" className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="department">Részleg *</Label>
-              <Select value={department} onValueChange={setDepartment} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Válassz részleget..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Aero">Aero</SelectItem>
-                  <SelectItem value="Elektronika">Elektronika</SelectItem>
-                  <SelectItem value="Futómű">Futómű</SelectItem>
-                  <SelectItem value="Motor">Motor</SelectItem>
-                  <SelectItem value="Váz">Váz</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Megnevezés *</Label>
-              <Input 
-                id="name" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                placeholder="Alkatrész neve" 
-                required 
-              />
-            </div>
-          </div>
-
-          {part && (
-            <div className="space-y-2">
-              <Label>Rajzszám</Label>
-              <Input value={part.part_number} disabled className="bg-muted" />
-            </div>
-          )}
-
+        {part && (
           <div className="space-y-2">
-            <Label htmlFor="description">Leírás</Label>
-            <Textarea 
-              id="description" 
-              value={description} 
-              onChange={(e) => setDescription(e.target.value)} 
-              placeholder="Részletes leírás..." 
-              rows={3} 
-            />
+            <Label>Rajzszám</Label>
+            <Input value={part.part_number} disabled className="bg-muted" />
           </div>
+        )}
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="status">Státusz</Label>
-              <Select value={status} onValueChange={(value) => setStatus(value as any)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="terv">Terv</SelectItem>
-                  <SelectItem value="gyartas_alatt">Gyártás alatt</SelectItem>
-                  <SelectItem value="kesz">Kész</SelectItem>
-                  <SelectItem value="jovahagyasra_var">Jóváhagyásra vár</SelectItem>
-                  <SelectItem value="elutasitva">Elutasítva</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="name">Megnevezés *</Label>
+          <Input 
+            id="name" 
+            value={name} 
+            onChange={(e) => setName(e.target.value)} 
+            placeholder="Alkatrész neve" 
+            required 
+          />
+        </div>
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="system">Rendszer</Label>
-              <Input 
-                id="system" 
-                value={system} 
-                onChange={(e) => setSystem(e.target.value)} 
-                placeholder="pl. Elektromos rendszer" 
-              />
-            </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="manufacturedPurchased">Gyártás/Vásárlás</Label>
+          <Select value={manufacturedPurchased} onValueChange={(value) => setManufacturedPurchased(value as any)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gyartott">Gyártott</SelectItem>
+              <SelectItem value="vasarolt">Vásárolt</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Mennyiség</Label>
-              <Input 
-                id="quantity" 
-                type="number" 
-                value={quantity} 
-                onChange={(e) => setQuantity(e.target.value)} 
-                min="1"
-              />
-            </div>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="manufacturingType">Gyártás típusa</Label>
+          <Input 
+            id="manufacturingType" 
+            value={manufacturingType} 
+            onChange={(e) => setManufacturingType(e.target.value)} 
+            placeholder="pl. CNC mart, 3D nyomtatás" 
+          />
+        </div>
+      </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="assembly">Assembly</Label>
-              <Input 
-                id="assembly" 
-                value={assembly} 
-                onChange={(e) => setAssembly(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subAssembly">Sub Assembly</Label>
-              <Input 
-                id="subAssembly" 
-                value={subAssembly} 
-                onChange={(e) => setSubAssembly(e.target.value)} 
-              />
-            </div>
-          </div>
-        </TabsContent>
+      <div className="space-y-2">
+        <Label htmlFor="material">Anyag</Label>
+        <Input 
+          id="material" 
+          value={material} 
+          onChange={(e) => setMaterial(e.target.value)} 
+          placeholder="pl. Alumínium 7075, PLA" 
+        />
+      </div>
 
-        <TabsContent value="manufacturing" className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="manufacturedPurchased">Típus</Label>
-              <Select value={manufacturedPurchased} onValueChange={(value) => setManufacturedPurchased(value as any)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gyartott">Gyártott</SelectItem>
-                  <SelectItem value="vasarolt">Vásárolt</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="responsiblePerson">Gyártásért felelős személy</Label>
+          <Input 
+            id="responsiblePerson" 
+            value={responsiblePerson} 
+            onChange={(e) => setResponsiblePerson(e.target.value)} 
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="responsibleCompany">Gyártásért felelős cég</Label>
+          <Input 
+            id="responsibleCompany" 
+            value={responsibleCompany} 
+            onChange={(e) => setResponsibleCompany(e.target.value)} 
+          />
+        </div>
+      </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="manufacturingType">Gyártás típusa</Label>
-              <Input 
-                id="manufacturingType" 
-                value={manufacturingType} 
-                onChange={(e) => setManufacturingType(e.target.value)} 
-                placeholder="pl. CNC mart, 3D nyomtatás" 
-              />
-            </div>
-          </div>
+      <div className="space-y-2">
+        <Label htmlFor="approver">Gyártást jóváhagyó személy</Label>
+        <Input 
+          id="approver" 
+          value={approver} 
+          onChange={(e) => setApprover(e.target.value)} 
+        />
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="material">Anyag</Label>
-            <Input 
-              id="material" 
-              value={material} 
-              onChange={(e) => setMaterial(e.target.value)} 
-              placeholder="pl. Alumínium 7075, PLA" 
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="responsiblePerson">Felelős személy</Label>
-              <Input 
-                id="responsiblePerson" 
-                value={responsiblePerson} 
-                onChange={(e) => setResponsiblePerson(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="responsibleCompany">Felelős cég</Label>
-              <Input 
-                id="responsibleCompany" 
-                value={responsibleCompany} 
-                onChange={(e) => setResponsibleCompany(e.target.value)} 
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="designer">Tervező</Label>
-              <Input 
-                id="designer" 
-                value={designer} 
-                onChange={(e) => setDesigner(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="approver">Jóváhagyó</Label>
-              <Input 
-                id="approver" 
-                value={approver} 
-                onChange={(e) => setApprover(e.target.value)} 
-              />
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="cost" className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="costPerPart">Darabonkénti költség (€)</Label>
-              <Input 
-                id="costPerPart" 
-                type="number" 
-                step="0.01"
-                value={costPerPart} 
-                onChange={(e) => setCostPerPart(e.target.value)} 
-                placeholder="0.00"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Összköltség (€)</Label>
-              <Input 
-                value={costPerPart && quantity ? (parseFloat(costPerPart) * parseInt(quantity)).toFixed(2) : "0.00"}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="emissionsPerPart">Darabonkénti emisszió (kg CO₂)</Label>
-              <Input 
-                id="emissionsPerPart" 
-                type="number" 
-                step="0.01"
-                value={emissionsPerPart} 
-                onChange={(e) => setEmissionsPerPart(e.target.value)} 
-                placeholder="0.00"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Összesített emisszió (kg CO₂)</Label>
-              <Input 
-                value={emissionsPerPart && quantity ? (parseFloat(emissionsPerPart) * parseInt(quantity)).toFixed(2) : "0.00"}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+      <div className="space-y-2">
+        <Label htmlFor="status">Státusz</Label>
+        <Select value={status} onValueChange={(value) => setStatus(value as any)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="terv">Terv</SelectItem>
+            <SelectItem value="gyartas_alatt">Gyártás alatt</SelectItem>
+            <SelectItem value="kesz">Kész</SelectItem>
+            <SelectItem value="jovahagyasra_var">Jóváhagyásra vár</SelectItem>
+            <SelectItem value="elutasitva">Elutasítva</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="flex justify-end gap-2 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
