@@ -137,7 +137,12 @@ const Dashboard = () => {
                 Formula Student alkatrészek nyilvántartása
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3">
+              {user?.user_metadata?.full_name && (
+                <span className="text-sm text-foreground font-medium">
+                  {user.user_metadata.full_name}
+                </span>
+              )}
               <Button variant="outline" onClick={() => navigate("/profile")}>
                 <UserIcon className="mr-2 h-4 w-4" />
                 Profil

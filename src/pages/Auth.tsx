@@ -11,6 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [department, setDepartment] = useState("");
+  const [discordProfile, setDiscordProfile] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -24,6 +27,11 @@ const Auth = () => {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          full_name: fullName,
+          department: department,
+          discord_profile: discordProfile,
+        },
       },
     });
 
@@ -134,6 +142,44 @@ const Auth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-fullname">Teljes név</Label>
+                  <Input
+                    id="signup-fullname"
+                    type="text"
+                    placeholder="Kovács János"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-department">Részleg</Label>
+                  <select
+                    id="signup-department"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Válassz részleget...</option>
+                    <option value="Aero">Aero</option>
+                    <option value="Elektronika">Elektronika</option>
+                    <option value="Futómű">Futómű</option>
+                    <option value="Motor">Motor</option>
+                    <option value="Váz">Váz</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-discord">Discord profil (opcionális)</Label>
+                  <Input
+                    id="signup-discord"
+                    type="text"
+                    placeholder="username#1234"
+                    value={discordProfile}
+                    onChange={(e) => setDiscordProfile(e.target.value)}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>

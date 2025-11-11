@@ -15,6 +15,7 @@ interface Profile {
   email: string | null;
   full_name: string | null;
   department: string | null;
+  discord_profile: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +25,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState("");
   const [department, setDepartment] = useState("");
+  const [discordProfile, setDiscordProfile] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
@@ -67,6 +69,7 @@ const Profile = () => {
         setProfile(data);
         setFullName(data.full_name || "");
         setDepartment(data.department || "");
+        setDiscordProfile(data.discord_profile || "");
       }
     } catch (error: any) {
       toast({
@@ -89,7 +92,8 @@ const Profile = () => {
         .from("profiles")
         .update({
           full_name: fullName,
-          department: department || null
+          department: department || null,
+          discord_profile: discordProfile || null
         })
         .eq("id", user.id);
 
@@ -205,6 +209,20 @@ const Profile = () => {
                     <SelectItem value="Váz">Váz</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="discord_profile">Discord profil</Label>
+                <Input
+                  id="discord_profile"
+                  type="text"
+                  value={discordProfile}
+                  onChange={(e) => setDiscordProfile(e.target.value)}
+                  placeholder="username#1234"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Opcionális
+                </p>
               </div>
 
               <div className="pt-4 border-t space-y-3">
