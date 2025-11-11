@@ -37,6 +37,9 @@ interface Part {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  profiles: {
+    full_name: string | null;
+  } | null;
 }
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -82,7 +85,7 @@ const Dashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("parts")
-        .select("*")
+        .select("*, profiles(full_name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;

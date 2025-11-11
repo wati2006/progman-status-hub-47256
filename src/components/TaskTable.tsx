@@ -44,6 +44,9 @@ interface Part {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  profiles: {
+    full_name: string | null;
+  } | null;
 }
 
 type SortField = "part_number" | "name" | "department" | "status" | "created_at";
@@ -200,9 +203,9 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
                   <TableCell>{getStatusBadge(part.status)}</TableCell>
                   <TableCell>
                     <div className="text-sm">{formatDate(part.created_at)}</div>
-                    {part.created_by && (
-                      <div className="text-xs text-muted-foreground font-mono">
-                        {part.created_by.substring(0, 8)}...
+                    {part.profiles?.full_name && (
+                      <div className="text-xs text-muted-foreground">
+                        {part.profiles.full_name}
                       </div>
                     )}
                   </TableCell>
