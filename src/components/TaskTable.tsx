@@ -248,7 +248,7 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Mégse</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Törlés</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Törlés</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
