@@ -14,92 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      task_history: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          feladat: string
-          felelos: string | null
-          id: string
-          leiras: string | null
-          modul: string
-          statusz: Database["public"]["Enums"]["task_status"]
-          task_id: string | null
-          workshop_teams: boolean | null
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          feladat: string
-          felelos?: string | null
-          id?: string
-          leiras?: string | null
-          modul: string
-          statusz: Database["public"]["Enums"]["task_status"]
-          task_id?: string | null
-          workshop_teams?: boolean | null
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          feladat?: string
-          felelos?: string | null
-          id?: string
-          leiras?: string | null
-          modul?: string
-          statusz?: Database["public"]["Enums"]["task_status"]
-          task_id?: string | null
-          workshop_teams?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_history_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tasks: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          feladat: string
-          felelos: string | null
-          id: string
-          leiras: string | null
-          modul: string
-          statusz: Database["public"]["Enums"]["task_status"]
-          updated_at: string
-          workshop_teams: boolean | null
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          feladat: string
-          felelos?: string | null
-          id?: string
-          leiras?: string | null
-          modul: string
-          statusz?: Database["public"]["Enums"]["task_status"]
-          updated_at?: string
-          workshop_teams?: boolean | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          feladat?: string
-          felelos?: string | null
-          id?: string
-          leiras?: string | null
-          modul?: string
-          statusz?: Database["public"]["Enums"]["task_status"]
-          updated_at?: string
-          workshop_teams?: boolean | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
@@ -108,7 +23,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      task_status: "terv" | "folyamatban" | "kesz" | "elvetve"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -235,8 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      task_status: ["terv", "folyamatban", "kesz", "elvetve"],
-    },
+    Enums: {},
   },
 } as const
