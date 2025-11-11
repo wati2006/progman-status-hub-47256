@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Trash2 } from "lucide-react";
 
 
 interface Part {
@@ -58,10 +59,85 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [cadModel, setCadModel] = useState<File | null>(null);
   const [technicalDrawing, setTechnicalDrawing] = useState<File | null>(null);
   const [documentation, setDocumentation] = useState<File | null>(null);
+  const [cadModelUrl, setCadModelUrl] = useState(part?.cad_model_url || null);
+  const [technicalDrawingUrl, setTechnicalDrawingUrl] = useState(part?.technical_drawing_url || null);
+  const [documentationUrl, setDocumentationUrl] = useState(part?.documentation_url || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const deleteFile = async (fileUrl: string) => {
+    try {
+      const { error } = await supabase.storage
+        .from('part-files')
+        .remove([fileUrl]);
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
+  };
+
+  const handleDeleteCadModel = async () => {
+    if (cadModelUrl) {
+      await deleteFile(cadModelUrl);
+      setCadModelUrl(null);
+      
+      // Update database
+      if (part) {
+        await supabase
+          .from("parts")
+          .update({ cad_model_url: null })
+          .eq("id", part.id);
+      }
+      
+      toast({
+        title: "Fájl törölve",
+        description: "A CAD modell sikeresen törölve lett."
+      });
+    }
+  };
+
+  const handleDeleteTechnicalDrawing = async () => {
+    if (technicalDrawingUrl) {
+      await deleteFile(technicalDrawingUrl);
+      setTechnicalDrawingUrl(null);
+      
+      // Update database
+      if (part) {
+        await supabase
+          .from("parts")
+          .update({ technical_drawing_url: null })
+          .eq("id", part.id);
+      }
+      
+      toast({
+        title: "Fájl törölve",
+        description: "A műszaki rajz sikeresen törölve lett."
+      });
+    }
+  };
+
+  const handleDeleteDocumentation = async () => {
+    if (documentationUrl) {
+      await deleteFile(documentationUrl);
+      setDocumentationUrl(null);
+      
+      // Update database
+      if (part) {
+        await supabase
+          .from("parts")
+          .update({ documentation_url: null })
+          .eq("id", part.id);
+      }
+      
+      toast({
+        title: "Fájl törölve",
+        description: "A dokumentáció sikeresen törölve lett."
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,41 +156,50 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Nincs bejelentkezett felhasználó");
 
-      let cadModelUrl = part?.cad_model_url || null;
-      let technicalDrawingUrl = part?.technical_drawing_url || null;
-      let documentationUrl = part?.documentation_url || null;
+      let finalCadModelUrl = cadModelUrl;
+      let finalTechnicalDrawingUrl = technicalDrawingUrl;
+      let finalDocumentationUrl = documentationUrl;
 
-      // Upload CAD model
+      // Upload CAD model - delete old one if exists
       if (cadModel) {
+        if (cadModelUrl) {
+          await deleteFile(cadModelUrl);
+        }
         const fileName = `${Date.now()}_${cadModel.name}`;
         const { error: uploadError } = await supabase.storage
           .from('part-files')
           .upload(fileName, cadModel);
         
         if (uploadError) throw uploadError;
-        cadModelUrl = fileName;
+        finalCadModelUrl = fileName;
       }
 
-      // Upload technical drawing
+      // Upload technical drawing - delete old one if exists
       if (technicalDrawing) {
+        if (technicalDrawingUrl) {
+          await deleteFile(technicalDrawingUrl);
+        }
         const fileName = `${Date.now()}_${technicalDrawing.name}`;
         const { error: uploadError } = await supabase.storage
           .from('part-files')
           .upload(fileName, technicalDrawing);
         
         if (uploadError) throw uploadError;
-        technicalDrawingUrl = fileName;
+        finalTechnicalDrawingUrl = fileName;
       }
 
-      // Upload documentation
+      // Upload documentation - delete old one if exists
       if (documentation) {
+        if (documentationUrl) {
+          await deleteFile(documentationUrl);
+        }
         const fileName = `${Date.now()}_${documentation.name}`;
         const { error: uploadError } = await supabase.storage
           .from('part-files')
           .upload(fileName, documentation);
         
         if (uploadError) throw uploadError;
-        documentationUrl = fileName;
+        finalDocumentationUrl = fileName;
       }
 
       const partData = {
@@ -128,9 +213,9 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
         responsible_company: responsibleCompany || null,
         approver: approver || null,
         status,
-        cad_model_url: cadModelUrl,
-        technical_drawing_url: technicalDrawingUrl,
-        documentation_url: documentationUrl,
+        cad_model_url: finalCadModelUrl,
+        technical_drawing_url: finalTechnicalDrawingUrl,
+        documentation_url: finalDocumentationUrl,
       };
 
       if (part) {
@@ -308,46 +393,76 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
         
         <div className="space-y-2">
           <Label htmlFor="cad-model">CAD modell (STEP, STL, SLDPRT, stb.)</Label>
-          <Input 
-            id="cad-model"
-            type="file"
-            accept=".step,.stp,.stl,.sldprt,.iges,.igs"
-            onChange={(e) => setCadModel(e.target.files?.[0] || null)}
-          />
-          {part?.cad_model_url && (
-            <p className="text-xs text-muted-foreground">
-              Jelenlegi fájl feltöltve
-            </p>
+          {cadModelUrl ? (
+            <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
+              <span className="text-sm flex-1 font-medium">Fájl feltöltve</span>
+              <Button 
+                type="button"
+                variant="ghost" 
+                size="sm"
+                onClick={handleDeleteCadModel}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <Input 
+              id="cad-model"
+              type="file"
+              accept=".step,.stp,.stl,.sldprt,.iges,.igs"
+              onChange={(e) => setCadModel(e.target.files?.[0] || null)}
+            />
           )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="technical-drawing">Műszaki rajz (PDF)</Label>
-          <Input 
-            id="technical-drawing"
-            type="file"
-            accept=".pdf"
-            onChange={(e) => setTechnicalDrawing(e.target.files?.[0] || null)}
-          />
-          {part?.technical_drawing_url && (
-            <p className="text-xs text-muted-foreground">
-              Jelenlegi fájl feltöltve
-            </p>
+          {technicalDrawingUrl ? (
+            <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
+              <span className="text-sm flex-1 font-medium">Fájl feltöltve</span>
+              <Button 
+                type="button"
+                variant="ghost" 
+                size="sm"
+                onClick={handleDeleteTechnicalDrawing}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <Input 
+              id="technical-drawing"
+              type="file"
+              accept=".pdf"
+              onChange={(e) => setTechnicalDrawing(e.target.files?.[0] || null)}
+            />
           )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="documentation">Dokumentáció (PDF)</Label>
-          <Input 
-            id="documentation"
-            type="file"
-            accept=".pdf"
-            onChange={(e) => setDocumentation(e.target.files?.[0] || null)}
-          />
-          {part?.documentation_url && (
-            <p className="text-xs text-muted-foreground">
-              Jelenlegi fájl feltöltve
-            </p>
+          {documentationUrl ? (
+            <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
+              <span className="text-sm flex-1 font-medium">Fájl feltöltve</span>
+              <Button 
+                type="button"
+                variant="ghost" 
+                size="sm"
+                onClick={handleDeleteDocumentation}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <Input 
+              id="documentation"
+              type="file"
+              accept=".pdf"
+              onChange={(e) => setDocumentation(e.target.files?.[0] || null)}
+            />
           )}
         </div>
       </div>
