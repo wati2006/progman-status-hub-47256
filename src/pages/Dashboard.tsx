@@ -36,6 +36,7 @@ interface Part {
   version: string;
   created_at: string;
   updated_at: string;
+  created_by: string | null;
 }
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);

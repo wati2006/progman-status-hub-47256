@@ -44,6 +44,7 @@ interface TaskFormProps {
 export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [department, setDepartment] = useState(part?.department || "");
   const [name, setName] = useState(part?.name || "");
+  const [description, setDescription] = useState(part?.description || "");
   const [manufacturedPurchased, setManufacturedPurchased] = useState(part?.manufactured_purchased || "gyartott");
   const [manufacturingType, setManufacturingType] = useState(part?.manufacturing_type || "");
   const [material, setMaterial] = useState(part?.material || "");
@@ -76,6 +77,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       const partData = {
         department,
         name,
+        description: description || null,
         manufactured_purchased: manufacturedPurchased,
         manufacturing_type: manufacturingType || null,
         material: material || null,
@@ -163,6 +165,17 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
             required 
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Leírás</Label>
+        <Textarea 
+          id="description" 
+          value={description} 
+          onChange={(e) => setDescription(e.target.value)} 
+          placeholder="További részletek, megjegyzések..." 
+          rows={3}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
