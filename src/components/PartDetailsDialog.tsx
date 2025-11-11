@@ -18,6 +18,9 @@ interface Part {
   status: "terv" | "gyartas_alatt" | "kesz" | "jovahagyasra_var" | "elutasitva";
   created_at: string;
   created_by: string | null;
+  profiles: {
+    full_name: string | null;
+  } | null;
 }
 
 interface PartDetailsDialogProps {
@@ -135,10 +138,10 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
               <Calendar className="h-4 w-4" />
               <span>Létrehozva: {formatDate(part.created_at)}</span>
             </div>
-            {part.created_by && (
+            {part.profiles?.full_name && (
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                <span className="font-mono text-xs">Feltöltő: {part.created_by.substring(0, 8)}...</span>
+                <span>Feltöltő: {part.profiles.full_name}</span>
               </div>
             )}
           </div>
