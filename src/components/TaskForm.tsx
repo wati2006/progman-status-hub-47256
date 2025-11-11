@@ -162,13 +162,18 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="department">Részleg *</Label>
-              <Input 
-                id="department" 
-                value={department} 
-                onChange={(e) => setDepartment(e.target.value)} 
-                placeholder="pl. Elektro, Futómű, Karosszéria..." 
-                required 
-              />
+              <Select value={department} onValueChange={setDepartment} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Válassz részleget..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Aero">Aero</SelectItem>
+                  <SelectItem value="Elektronika">Elektronika</SelectItem>
+                  <SelectItem value="Futómű">Futómű</SelectItem>
+                  <SelectItem value="Motor">Motor</SelectItem>
+                  <SelectItem value="Váz">Váz</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="name">Megnevezés *</Label>
