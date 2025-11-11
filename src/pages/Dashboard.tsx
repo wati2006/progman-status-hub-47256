@@ -85,10 +85,10 @@ const Dashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("parts")
-        .select("*, profiles(full_name)")
+        .select("*, profiles!parts_created_by_fkey(full_name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Part[];
     },
     enabled: !!user
   });
