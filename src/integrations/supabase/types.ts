@@ -14,16 +14,197 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      parts: {
+        Row: {
+          approver: string | null
+          assembly: string | null
+          cost_per_part: number | null
+          cost_sum: number | null
+          created_at: string
+          created_by: string | null
+          department: string
+          description: string | null
+          designer: string | null
+          emissions_per_part: number | null
+          emissions_sum: number | null
+          id: string
+          manufactured_purchased: Database["public"]["Enums"]["manufactured_purchased"]
+          manufacturing_type: string | null
+          material: string | null
+          name: string
+          part_number: string
+          quantity: number | null
+          responsible_company: string | null
+          responsible_person: string | null
+          status: Database["public"]["Enums"]["part_status"]
+          sub_assembly: string | null
+          system: string | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          approver?: string | null
+          assembly?: string | null
+          cost_per_part?: number | null
+          cost_sum?: number | null
+          created_at?: string
+          created_by?: string | null
+          department: string
+          description?: string | null
+          designer?: string | null
+          emissions_per_part?: number | null
+          emissions_sum?: number | null
+          id?: string
+          manufactured_purchased?: Database["public"]["Enums"]["manufactured_purchased"]
+          manufacturing_type?: string | null
+          material?: string | null
+          name: string
+          part_number: string
+          quantity?: number | null
+          responsible_company?: string | null
+          responsible_person?: string | null
+          status?: Database["public"]["Enums"]["part_status"]
+          sub_assembly?: string | null
+          system?: string | null
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          approver?: string | null
+          assembly?: string | null
+          cost_per_part?: number | null
+          cost_sum?: number | null
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          description?: string | null
+          designer?: string | null
+          emissions_per_part?: number | null
+          emissions_sum?: number | null
+          id?: string
+          manufactured_purchased?: Database["public"]["Enums"]["manufactured_purchased"]
+          manufacturing_type?: string | null
+          material?: string | null
+          name?: string
+          part_number?: string
+          quantity?: number | null
+          responsible_company?: string | null
+          responsible_person?: string | null
+          status?: Database["public"]["Enums"]["part_status"]
+          sub_assembly?: string | null
+          system?: string | null
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      parts_history: {
+        Row: {
+          approver: string | null
+          assembly: string | null
+          changed_at: string
+          changed_by: string | null
+          cost_per_part: number | null
+          cost_sum: number | null
+          department: string
+          description: string | null
+          designer: string | null
+          emissions_per_part: number | null
+          emissions_sum: number | null
+          id: string
+          manufactured_purchased: Database["public"]["Enums"]["manufactured_purchased"]
+          manufacturing_type: string | null
+          material: string | null
+          name: string
+          part_id: string | null
+          part_number: string
+          quantity: number | null
+          responsible_company: string | null
+          responsible_person: string | null
+          status: Database["public"]["Enums"]["part_status"]
+          sub_assembly: string | null
+          system: string | null
+          version: string
+        }
+        Insert: {
+          approver?: string | null
+          assembly?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          cost_per_part?: number | null
+          cost_sum?: number | null
+          department: string
+          description?: string | null
+          designer?: string | null
+          emissions_per_part?: number | null
+          emissions_sum?: number | null
+          id?: string
+          manufactured_purchased: Database["public"]["Enums"]["manufactured_purchased"]
+          manufacturing_type?: string | null
+          material?: string | null
+          name: string
+          part_id?: string | null
+          part_number: string
+          quantity?: number | null
+          responsible_company?: string | null
+          responsible_person?: string | null
+          status: Database["public"]["Enums"]["part_status"]
+          sub_assembly?: string | null
+          system?: string | null
+          version: string
+        }
+        Update: {
+          approver?: string | null
+          assembly?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          cost_per_part?: number | null
+          cost_sum?: number | null
+          department?: string
+          description?: string | null
+          designer?: string | null
+          emissions_per_part?: number | null
+          emissions_sum?: number | null
+          id?: string
+          manufactured_purchased?: Database["public"]["Enums"]["manufactured_purchased"]
+          manufacturing_type?: string | null
+          material?: string | null
+          name?: string
+          part_id?: string | null
+          part_number?: string
+          quantity?: number | null
+          responsible_company?: string | null
+          responsible_person?: string | null
+          status?: Database["public"]["Enums"]["part_status"]
+          sub_assembly?: string | null
+          system?: string | null
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parts_history_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_part_number: { Args: { dept: string }; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      manufactured_purchased: "gyartott" | "vasarolt"
+      part_status:
+        | "terv"
+        | "gyartas_alatt"
+        | "kesz"
+        | "jovahagyasra_var"
+        | "elutasitva"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +331,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      manufactured_purchased: ["gyartott", "vasarolt"],
+      part_status: [
+        "terv",
+        "gyartas_alatt",
+        "kesz",
+        "jovahagyasra_var",
+        "elutasitva",
+      ],
+    },
   },
 } as const

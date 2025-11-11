@@ -10,28 +10,42 @@ import { TaskForm } from "@/components/TaskForm";
 import { TaskFilters } from "@/components/TaskFilters";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
-interface Task {
+
+interface Part {
   id: string;
-  modul: string;
-  feladat: string;
-  leiras: string | null;
-  statusz: "terv" | "folyamatban" | "kesz" | "elvetve";
-  felelos: string | null;
-  workshop_teams: boolean;
+  part_number: string;
+  department: string;
+  name: string;
+  description: string | null;
+  manufactured_purchased: "gyartott" | "vasarolt";
+  manufacturing_type: string | null;
+  material: string | null;
+  responsible_person: string | null;
+  responsible_company: string | null;
+  approver: string | null;
+  designer: string | null;
+  status: "terv" | "gyartas_alatt" | "kesz" | "jovahagyasra_var" | "elutasitva";
+  system: string | null;
+  assembly: string | null;
+  sub_assembly: string | null;
+  quantity: number | null;
+  cost_per_part: number | null;
+  cost_sum: number | null;
+  emissions_per_part: number | null;
+  emissions_sum: number | null;
+  version: string;
   created_at: string;
   updated_at: string;
 }
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingPart, setEditingPart] = useState<Part | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [modulFilter, setModulFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   useEffect(() => {
     const checkAuth = async () => {
       const {
@@ -60,34 +74,37 @@ const Dashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
   const {
-    data: tasks = [],
+    data: parts = [],
     isLoading
   } = useQuery({
-    queryKey: ["tasks"],
+    queryKey: ["parts"],
     queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("tasks").select("*").order("created_at", {
-        ascending: false
-      });
+      const { data, error } = await supabase
+        .from("parts")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Task[];
+      return data;
     },
     enabled: !!user
   });
-  const modules = useMemo(() => {
-    const uniqueModules = new Set(tasks.map(task => task.modul));
-    return Array.from(uniqueModules).sort();
-  }, [tasks]);
-  const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
-      const matchesSearch = task.feladat.toLowerCase().includes(searchTerm.toLowerCase()) || task.leiras?.toLowerCase().includes(searchTerm.toLowerCase()) || task.modul.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === "all" || task.statusz === statusFilter;
-      const matchesModul = modulFilter === "all" || task.modul === modulFilter;
-      return matchesSearch && matchesStatus && matchesModul;
+  const departments = useMemo(() => {
+    const uniqueDepartments = new Set(parts.map(part => part.department));
+    return Array.from(uniqueDepartments).sort();
+  }, [parts]);
+
+  const filteredParts = useMemo(() => {
+    return parts.filter(part => {
+      const matchesSearch = 
+        part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        part.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        part.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        part.part_number.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || part.status === statusFilter;
+      const matchesDepartment = departmentFilter === "all" || part.department === departmentFilter;
+      return matchesSearch && matchesStatus && matchesDepartment;
     });
-  }, [tasks, searchTerm, statusFilter, modulFilter]);
+  }, [parts, searchTerm, statusFilter, departmentFilter]);
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast({
@@ -95,13 +112,14 @@ const Dashboard = () => {
       description: "Sikeresen kijelentkeztél a rendszerből."
     });
   };
-  const handleEdit = (task: Task) => {
-    setEditingTask(task);
+  const handleEdit = (part: Part) => {
+    setEditingPart(part);
     setIsDialogOpen(true);
   };
+
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
-    setEditingTask(null);
+    setEditingPart(null);
   };
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
@@ -113,9 +131,9 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Függőségek Tára / Alkatrészkatalógus</h1>
+              <h1 className="text-2xl font-bold text-foreground">Alkatrészkatalógus</h1>
               <p className="text-sm text-muted-foreground">
-                Gyártási feladatok nyilvántartása
+                Formula Student alkatrészek nyilvántartása
               </p>
             </div>
             <Button variant="outline" onClick={handleLogout}>
@@ -129,30 +147,38 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6 flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-semibold">Feladatok</h2>
+            <h2 className="text-xl font-semibold">Alkatrészek</h2>
             <p className="text-sm text-muted-foreground">
-              {filteredTasks.length} feladat {searchTerm || statusFilter !== "all" || modulFilter !== "all" ? "szűrve" : "összesen"}
+              {filteredParts.length} alkatrész {searchTerm || statusFilter !== "all" || departmentFilter !== "all" ? "szűrve" : "összesen"}
             </p>
           </div>
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Új feladat
+            Új alkatrész
           </Button>
         </div>
 
-        <TaskFilters searchTerm={searchTerm} onSearchChange={setSearchTerm} statusFilter={statusFilter} onStatusFilterChange={setStatusFilter} modulFilter={modulFilter} onModulFilterChange={setModulFilter} modules={modules} />
+        <TaskFilters 
+          searchTerm={searchTerm} 
+          onSearchChange={setSearchTerm} 
+          statusFilter={statusFilter} 
+          onStatusFilterChange={setStatusFilter} 
+          modulFilter={departmentFilter} 
+          onModulFilterChange={setDepartmentFilter} 
+          modules={departments} 
+        />
 
-        <TaskTable tasks={filteredTasks} onEdit={handleEdit} />
+        <TaskTable parts={filteredParts} onEdit={handleEdit} />
       </main>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingTask ? "Feladat szerkesztése" : "Új feladat létrehozása"}
+              {editingPart ? "Alkatrész szerkesztése" : "Új alkatrész létrehozása"}
             </DialogTitle>
           </DialogHeader>
-          <TaskForm task={editingTask} onClose={handleCloseDialog} />
+          <TaskForm part={editingPart} onClose={handleCloseDialog} />
         </DialogContent>
       </Dialog>
     </div>;
