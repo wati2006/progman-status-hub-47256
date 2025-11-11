@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 
 
 interface Part {
@@ -63,6 +63,11 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [technicalDrawingUrl, setTechnicalDrawingUrl] = useState(part?.technical_drawing_url || null);
   const [documentationUrl, setDocumentationUrl] = useState(part?.documentation_url || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    cadModel: boolean;
+    technicalDrawing: boolean;
+    documentation: boolean;
+  }>({ cadModel: false, technicalDrawing: false, documentation: false });
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -162,6 +167,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
 
       // Upload CAD model - delete old one if exists
       if (cadModel) {
+        setUploadProgress(prev => ({ ...prev, cadModel: true }));
         if (cadModelUrl) {
           await deleteFile(cadModelUrl);
         }
@@ -172,10 +178,12 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
         
         if (uploadError) throw uploadError;
         finalCadModelUrl = fileName;
+        setUploadProgress(prev => ({ ...prev, cadModel: false }));
       }
 
       // Upload technical drawing - delete old one if exists
       if (technicalDrawing) {
+        setUploadProgress(prev => ({ ...prev, technicalDrawing: true }));
         if (technicalDrawingUrl) {
           await deleteFile(technicalDrawingUrl);
         }
@@ -186,10 +194,12 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
         
         if (uploadError) throw uploadError;
         finalTechnicalDrawingUrl = fileName;
+        setUploadProgress(prev => ({ ...prev, technicalDrawing: false }));
       }
 
       // Upload documentation - delete old one if exists
       if (documentation) {
+        setUploadProgress(prev => ({ ...prev, documentation: true }));
         if (documentationUrl) {
           await deleteFile(documentationUrl);
         }
@@ -200,6 +210,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
         
         if (uploadError) throw uploadError;
         finalDocumentationUrl = fileName;
+        setUploadProgress(prev => ({ ...prev, documentation: false }));
       }
 
       const partData = {
@@ -257,6 +268,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       });
     } finally {
       setIsSubmitting(false);
+      setUploadProgress({ cadModel: false, technicalDrawing: false, documentation: false });
     }
   };
 
@@ -406,12 +418,18 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
+          ) : uploadProgress.cadModel ? (
+            <div className="flex items-center gap-2 p-3 border rounded-md bg-primary/10">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-sm text-primary font-medium">CAD modell feltöltése...</span>
+            </div>
           ) : (
             <Input 
               id="cad-model"
               type="file"
               accept=".step,.stp,.stl,.sldprt,.iges,.igs"
               onChange={(e) => setCadModel(e.target.files?.[0] || null)}
+              disabled={isSubmitting}
             />
           )}
         </div>
@@ -431,12 +449,18 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
+          ) : uploadProgress.technicalDrawing ? (
+            <div className="flex items-center gap-2 p-3 border rounded-md bg-primary/10">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-sm text-primary font-medium">Műszaki rajz feltöltése...</span>
+            </div>
           ) : (
             <Input 
               id="technical-drawing"
               type="file"
               accept=".pdf"
               onChange={(e) => setTechnicalDrawing(e.target.files?.[0] || null)}
+              disabled={isSubmitting}
             />
           )}
         </div>
@@ -456,12 +480,18 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
+          ) : uploadProgress.documentation ? (
+            <div className="flex items-center gap-2 p-3 border rounded-md bg-primary/10">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-sm text-primary font-medium">Dokumentáció feltöltése...</span>
+            </div>
           ) : (
             <Input 
               id="documentation"
               type="file"
               accept=".pdf"
               onChange={(e) => setDocumentation(e.target.files?.[0] || null)}
+              disabled={isSubmitting}
             />
           )}
         </div>
