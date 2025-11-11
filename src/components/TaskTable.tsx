@@ -141,41 +141,41 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
 
   return (
     <>
-      <div className="rounded-md border bg-card">
+      <div className="rounded-md border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
+              <TableHead className="w-[120px]">
                 <Button variant="ghost" size="sm" onClick={() => handleSort("part_number")} className="h-8 px-2">
                   Rajzszám
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[250px]">
                 <Button variant="ghost" size="sm" onClick={() => handleSort("name")} className="h-8 px-2">
                   Megnevezés
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[120px]">
                 <Button variant="ghost" size="sm" onClick={() => handleSort("department")} className="h-8 px-2">
                   Részleg
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[140px]">
                 <Button variant="ghost" size="sm" onClick={() => handleSort("status")} className="h-8 px-2">
                   Státusz
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[180px]">
                 <Button variant="ghost" size="sm" onClick={() => handleSort("created_at")} className="h-8 px-2">
                   Létrehozva
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead className="text-right">Műveletek</TableHead>
+              <TableHead className="text-right w-[140px]">Műveletek</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -188,23 +188,23 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
             ) : (
               sortedParts.map((part) => (
                 <TableRow key={part.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedPart(part)}>
-                  <TableCell className="font-mono text-sm">{part.part_number}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-mono text-sm max-w-[120px] truncate">{part.part_number}</TableCell>
+                  <TableCell className="max-w-[250px]">
                     <div>
-                      <div className="font-medium">{part.name}</div>
+                      <div className="font-medium truncate">{part.name}</div>
                       {part.description && (
-                        <div className="text-sm text-muted-foreground truncate max-w-md">
+                        <div className="text-sm text-muted-foreground truncate">
                           {part.description}
                         </div>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{part.department}</TableCell>
+                  <TableCell className="max-w-[120px] truncate">{part.department}</TableCell>
                   <TableCell>{getStatusBadge(part.status)}</TableCell>
-                  <TableCell>
+                  <TableCell className="min-w-[140px]">
                     <div className="text-sm">{formatDate(part.created_at)}</div>
                     {part.profiles?.full_name && (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground truncate max-w-[140px]">
                         {part.profiles.full_name}
                       </div>
                     )}
