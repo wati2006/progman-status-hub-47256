@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, User as UserIcon } from "lucide-react";
 import { TaskTable } from "@/components/TaskTable";
 import { TaskForm } from "@/components/TaskForm";
 import { TaskFilters } from "@/components/TaskFilters";
@@ -137,10 +137,16 @@ const Dashboard = () => {
                 Formula Student alkatrészek nyilvántartása
               </p>
             </div>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Kijelentkezés
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate("/profile")}>
+                <UserIcon className="mr-2 h-4 w-4" />
+                Profil
+              </Button>
+              <Button variant="outline" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Kijelentkezés
+              </Button>
+            </div>
           </div>
         </div>
       </header>
