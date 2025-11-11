@@ -10,7 +10,6 @@ import { TaskForm } from "@/components/TaskForm";
 import { TaskFilters } from "@/components/TaskFilters";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
-
 interface Task {
   id: string;
   modul: string;
@@ -22,7 +21,6 @@ interface Task {
   created_at: string;
   updated_at: string;
 }
-
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -31,103 +29,91 @@ const Dashboard = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [modulFilter, setModulFilter] = useState("all");
   const navigate = useNavigate();
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
         return;
       }
-      
       setUser(session.user);
     };
-
     checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "SIGNED_OUT" || !session) {
-          navigate("/auth");
-        } else {
-          setUser(session.user);
-        }
+    const {
+      data: {
+        subscription
       }
-    );
-
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        navigate("/auth");
+      } else {
+        setUser(session.user);
+      }
+    });
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  const { data: tasks = [], isLoading } = useQuery({
+  const {
+    data: tasks = [],
+    isLoading
+  } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .order("created_at", { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from("tasks").select("*").order("created_at", {
+        ascending: false
+      });
       if (error) throw error;
       return data as Task[];
     },
-    enabled: !!user,
+    enabled: !!user
   });
-
   const modules = useMemo(() => {
-    const uniqueModules = new Set(tasks.map((task) => task.modul));
+    const uniqueModules = new Set(tasks.map(task => task.modul));
     return Array.from(uniqueModules).sort();
   }, [tasks]);
-
   const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      const matchesSearch =
-        task.feladat.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.leiras?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.modul.toLowerCase().includes(searchTerm.toLowerCase());
-      
+    return tasks.filter(task => {
+      const matchesSearch = task.feladat.toLowerCase().includes(searchTerm.toLowerCase()) || task.leiras?.toLowerCase().includes(searchTerm.toLowerCase()) || task.modul.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || task.statusz === statusFilter;
       const matchesModul = modulFilter === "all" || task.modul === modulFilter;
-
       return matchesSearch && matchesStatus && matchesModul;
     });
   }, [tasks, searchTerm, statusFilter, modulFilter]);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast({
       title: "Kijelentkezve",
-      description: "Sikeresen kijelentkeztél a rendszerből.",
+      description: "Sikeresen kijelentkeztél a rendszerből."
     });
   };
-
   const handleEdit = (task: Task) => {
     setEditingTask(task);
     setIsDialogOpen(true);
   };
-
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingTask(null);
   };
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-lg text-muted-foreground">Betöltés...</div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                Manufacturing Status Tracker
-              </h1>
+              <h1 className="text-2xl font-bold text-foreground">Függőségek Tára / Alkatrészkatalógus</h1>
               <p className="text-sm text-muted-foreground">
                 Gyártási feladatok nyilvántartása
               </p>
@@ -154,15 +140,7 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        <TaskFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          modulFilter={modulFilter}
-          onModulFilterChange={setModulFilter}
-          modules={modules}
-        />
+        <TaskFilters searchTerm={searchTerm} onSearchChange={setSearchTerm} statusFilter={statusFilter} onStatusFilterChange={setStatusFilter} modulFilter={modulFilter} onModulFilterChange={setModulFilter} modules={modules} />
 
         <TaskTable tasks={filteredTasks} onEdit={handleEdit} />
       </main>
@@ -177,8 +155,6 @@ const Dashboard = () => {
           <TaskForm task={editingTask} onClose={handleCloseDialog} />
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
