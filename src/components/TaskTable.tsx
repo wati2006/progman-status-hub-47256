@@ -44,6 +44,9 @@ interface Part {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  cad_model_url: string | null;
+  technical_drawing_url: string | null;
+  documentation_url: string | null;
   profiles: {
     full_name: string | null;
   } | null;

@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           approver: string | null
           assembly: string | null
+          cad_model_url: string | null
           cost_per_part: number | null
           cost_sum: number | null
           created_at: string
@@ -25,6 +26,7 @@ export type Database = {
           department: string
           description: string | null
           designer: string | null
+          documentation_url: string | null
           emissions_per_part: number | null
           emissions_sum: number | null
           id: string
@@ -39,12 +41,14 @@ export type Database = {
           status: Database["public"]["Enums"]["part_status"]
           sub_assembly: string | null
           system: string | null
+          technical_drawing_url: string | null
           updated_at: string
           version: string
         }
         Insert: {
           approver?: string | null
           assembly?: string | null
+          cad_model_url?: string | null
           cost_per_part?: number | null
           cost_sum?: number | null
           created_at?: string
@@ -52,6 +56,7 @@ export type Database = {
           department: string
           description?: string | null
           designer?: string | null
+          documentation_url?: string | null
           emissions_per_part?: number | null
           emissions_sum?: number | null
           id?: string
@@ -66,12 +71,14 @@ export type Database = {
           status?: Database["public"]["Enums"]["part_status"]
           sub_assembly?: string | null
           system?: string | null
+          technical_drawing_url?: string | null
           updated_at?: string
           version?: string
         }
         Update: {
           approver?: string | null
           assembly?: string | null
+          cad_model_url?: string | null
           cost_per_part?: number | null
           cost_sum?: number | null
           created_at?: string
@@ -79,6 +86,7 @@ export type Database = {
           department?: string
           description?: string | null
           designer?: string | null
+          documentation_url?: string | null
           emissions_per_part?: number | null
           emissions_sum?: number | null
           id?: string
@@ -93,6 +101,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["part_status"]
           sub_assembly?: string | null
           system?: string | null
+          technical_drawing_url?: string | null
           updated_at?: string
           version?: string
         }
@@ -110,6 +119,7 @@ export type Database = {
         Row: {
           approver: string | null
           assembly: string | null
+          cad_model_url: string | null
           changed_at: string
           changed_by: string | null
           cost_per_part: number | null
@@ -117,6 +127,7 @@ export type Database = {
           department: string
           description: string | null
           designer: string | null
+          documentation_url: string | null
           emissions_per_part: number | null
           emissions_sum: number | null
           id: string
@@ -132,11 +143,13 @@ export type Database = {
           status: Database["public"]["Enums"]["part_status"]
           sub_assembly: string | null
           system: string | null
+          technical_drawing_url: string | null
           version: string
         }
         Insert: {
           approver?: string | null
           assembly?: string | null
+          cad_model_url?: string | null
           changed_at?: string
           changed_by?: string | null
           cost_per_part?: number | null
@@ -144,6 +157,7 @@ export type Database = {
           department: string
           description?: string | null
           designer?: string | null
+          documentation_url?: string | null
           emissions_per_part?: number | null
           emissions_sum?: number | null
           id?: string
@@ -159,11 +173,13 @@ export type Database = {
           status: Database["public"]["Enums"]["part_status"]
           sub_assembly?: string | null
           system?: string | null
+          technical_drawing_url?: string | null
           version: string
         }
         Update: {
           approver?: string | null
           assembly?: string | null
+          cad_model_url?: string | null
           changed_at?: string
           changed_by?: string | null
           cost_per_part?: number | null
@@ -171,6 +187,7 @@ export type Database = {
           department?: string
           description?: string | null
           designer?: string | null
+          documentation_url?: string | null
           emissions_per_part?: number | null
           emissions_sum?: number | null
           id?: string
@@ -186,6 +203,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["part_status"]
           sub_assembly?: string | null
           system?: string | null
+          technical_drawing_url?: string | null
           version?: string
         }
         Relationships: [

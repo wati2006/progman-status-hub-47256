@@ -1,7 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, User, Package, Factory, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, User, Package, Factory, FileText, Download, FileIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Part {
   id: string;
@@ -18,6 +20,9 @@ interface Part {
   status: "terv" | "gyartas_alatt" | "kesz" | "jovahagyasra_var" | "elutasitva";
   created_at: string;
   created_by: string | null;
+  cad_model_url: string | null;
+  technical_drawing_url: string | null;
+  documentation_url: string | null;
   profiles: {
     full_name: string | null;
   } | null;
@@ -53,6 +58,27 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const downloadFile = async (fileUrl: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('part-files')
+        .download(fileUrl);
+      
+      if (error) throw error;
+      
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
   };
 
   return (
@@ -132,6 +158,57 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
           </div>
 
           <Separator />
+
+          {(part.cad_model_url || part.technical_drawing_url || part.documentation_url) && (
+            <>
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <FileIcon className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-semibold">Fájlok</h3>
+                </div>
+                <div className="space-y-2">
+                  {part.cad_model_url && (
+                    <div className="flex items-center justify-between p-2 border rounded-md">
+                      <span className="text-sm">CAD modell</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => downloadFile(part.cad_model_url!, 'cad_model')}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  {part.technical_drawing_url && (
+                    <div className="flex items-center justify-between p-2 border rounded-md">
+                      <span className="text-sm">Műszaki rajz</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => downloadFile(part.technical_drawing_url!, 'technical_drawing.pdf')}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  {part.documentation_url && (
+                    <div className="flex items-center justify-between p-2 border rounded-md">
+                      <span className="text-sm">Dokumentáció</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => downloadFile(part.documentation_url!, 'documentation.pdf')}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <Separator />
+            </>
+          )}
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
