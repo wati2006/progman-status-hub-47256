@@ -33,6 +33,7 @@ interface Part {
   approver: string | null;
   status: "terv" | "gyartas_alatt" | "kesz" | "jovahagyasra_var" | "elutasitva";
   created_at: string;
+  updated_at: string;
   created_by: string | null;
   profiles: {
     full_name: string | null;
@@ -336,6 +337,10 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>Létrehozva: {formatDate(part.created_at)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>Legutóbb szerkesztve: {formatDate(part.updated_at)}</span>
             </div>
             {part.profiles?.full_name && part.created_by && (
               <div className="flex items-center gap-2">
