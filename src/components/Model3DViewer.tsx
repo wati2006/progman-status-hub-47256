@@ -1,6 +1,6 @@
 import { Suspense, useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Stage, useGLTF, Html } from "@react-three/drei";
+import { OrbitControls, Stage, Html } from "@react-three/drei";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, Download } from "lucide-react";
@@ -16,13 +16,11 @@ interface Model3DViewerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function Model({ url, isStep }: { url: string; isStep: boolean }) {
+function Model({ url }: { url: string }) {
   const [geometry, setGeometry] = useState<THREE.Group | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isStep) return;
-
     const loadStepFile = async () => {
       try {
         const occt = await occtimportjs();
@@ -72,23 +70,7 @@ function Model({ url, isStep }: { url: string; isStep: boolean }) {
     };
 
     loadStepFile();
-  }, [url, isStep]);
-
-  if (!isStep) {
-    try {
-      const { scene } = useGLTF(url);
-      return <primitive object={scene} />;
-    } catch (error) {
-      console.error("Error loading model:", error);
-      return (
-        <Html center>
-          <div className="text-destructive">
-            Nem sikerült betölteni a modellt
-          </div>
-        </Html>
-      );
-    }
-  }
+  }, [url]);
 
   if (error) {
     return (
@@ -158,8 +140,7 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
   }
 
   const fileExtension = fileName.toLowerCase().split('.').pop();
-  const isSupportedFormat = ['glb', 'gltf', 'step', 'stp'].includes(fileExtension || '');
-  const isStepFormat = ['step', 'stp'].includes(fileExtension || '');
+  const isSupportedFormat = ['step', 'stp'].includes(fileExtension || '');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -184,7 +165,7 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center space-y-4">
                 <p className="text-muted-foreground">
-                  A 3D előnézet csak STEP, GLB és GLTF formátumokat támogat.
+                  A 3D előnézet csak STEP formátumot támogat (.step, .stp)
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Jelenlegi fájl: .{fileExtension}
@@ -199,14 +180,14 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Modell betöltése...</p>
+                <p className="text-sm text-muted-foreground">STEP modell betöltése...</p>
               </div>
             </div>
           ) : signedUrl ? (
             <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
               <Suspense fallback={<Loader />}>
                 <Stage environment="city" intensity={0.6}>
-                  <Model url={signedUrl} isStep={isStepFormat} />
+                  <Model url={signedUrl} />
                 </Stage>
                 <OrbitControls makeDefault />
               </Suspense>
