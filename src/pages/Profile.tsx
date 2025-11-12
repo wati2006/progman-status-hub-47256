@@ -382,6 +382,7 @@ const Profile = () => {
                     <SelectItem value="Futómű">Futómű</SelectItem>
                     <SelectItem value="Motor">Motor</SelectItem>
                     <SelectItem value="Váz">Váz</SelectItem>
+                    <SelectItem value="IT">IT</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

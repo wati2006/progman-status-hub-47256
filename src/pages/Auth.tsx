@@ -170,6 +170,7 @@ const Auth = () => {
                     <option value="Futómű">Futómű</option>
                     <option value="Motor">Motor</option>
                     <option value="Váz">Váz</option>
+                    <option value="IT">IT</option>
                   </select>
                 </div>
                 <div className="space-y-2">
