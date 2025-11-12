@@ -5,12 +5,13 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, User, Package, Factory, FileText, Download, FileIcon, History } from "lucide-react";
+import { Calendar, User, Package, Factory, FileText, Download, FileIcon, History, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { PartHistoryDialog } from "./PartHistoryDialog";
+import { Model3DViewer } from "./Model3DViewer";
 
 interface PartFile {
   id: string;
@@ -52,6 +53,8 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
   const [files, setFiles] = useState<PartFile[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<{ url: string; name: string } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -141,6 +144,18 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
       case 'documentation': return 'Dokumentációk';
       default: return category;
     }
+  };
+
+  const handlePreview = (fileUrl: string, category: string, version: string) => {
+    const fileName = `${getCategoryLabel(category, 1)}_v${version}`;
+    setSelectedFile({ url: fileUrl, name: fileName });
+    setViewerOpen(true);
+  };
+
+  const canPreview = (category: string, fileUrl: string) => {
+    if (category !== 'cad_model') return false;
+    const extension = fileUrl.toLowerCase().split('.').pop();
+    return ['glb', 'gltf'].includes(extension || '');
   };
 
   const compareVersions = (v1: string, v2: string): number => {
@@ -296,13 +311,24 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
                               Feltöltve: {formatDate(file.created_at)}
                             </p>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            {canPreview(category, file.file_url) && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handlePreview(file.file_url, category, file.version)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -328,13 +354,24 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
                                     Feltöltve: {formatDate(file.created_at)}
                                   </p>
                                 </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
-                                >
-                                  <Download className="h-4 w-4" />
-                                </Button>
+                                <div className="flex gap-2">
+                                  {canPreview(category, file.file_url) && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => handlePreview(file.file_url, category, file.version)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -387,6 +424,15 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
       onOpenChange={setIsHistoryOpen}
       onUserClick={onCreatorClick}
     />
+    
+    {selectedFile && (
+      <Model3DViewer
+        fileUrl={selectedFile.url}
+        fileName={selectedFile.name}
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+      />
+    )}
   </>
   );
 };
