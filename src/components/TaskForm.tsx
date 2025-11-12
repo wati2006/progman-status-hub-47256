@@ -254,9 +254,39 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       return;
     }
 
+    // Get all files in this category sorted by version
+    const categoryFiles = existingFiles
+      .filter(f => f.category === file.category)
+      .sort((a, b) => compareVersions(a.version, b.version));
+    
+    // Find the current file's position
+    const currentIndex = categoryFiles.findIndex(f => f.id === fileId);
+    
+    // Get previous and next versions
+    const previousFile = currentIndex > 0 ? categoryFiles[currentIndex - 1] : null;
+    const nextFile = currentIndex < categoryFiles.length - 1 ? categoryFiles[currentIndex + 1] : null;
+    
+    // Validate: new version must be greater than previous and less than next
+    if (previousFile && compareVersions(editVersion, previousFile.version) <= 0) {
+      toast({
+        title: "Érvénytelen verzió",
+        description: `A verzió számnak nagyobbnak kell lennie, mint ${previousFile.version}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (nextFile && compareVersions(editVersion, nextFile.version) >= 0) {
+      toast({
+        title: "Érvénytelen verzió",
+        description: `A verzió számnak kisebbnek kell lennie, mint ${nextFile.version}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Check if version already exists in this category
-    const categoryFiles = existingFiles.filter(f => f.category === file.category && f.id !== fileId);
-    const versionExists = categoryFiles.some(f => f.version === editVersion);
+    const versionExists = categoryFiles.some(f => f.id !== fileId && f.version === editVersion);
     
     if (versionExists) {
       toast({
@@ -516,21 +546,19 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
                   </div>
                   {!isEditing && (
                     <div className="flex items-center gap-1">
-                      {isLatest && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingFileId(file.id);
-                            setEditVersion(file.version);
-                          }}
-                          disabled={isSubmitting}
-                          title="Verzió szerkesztése"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingFileId(file.id);
+                          setEditVersion(file.version);
+                        }}
+                        disabled={isSubmitting}
+                        title="Verzió szerkesztése"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
                       <Button
                         type="button"
                         variant="ghost"

@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, User, Package, Factory, FileText, Download, FileIcon, Trash2, Edit2, Check, X } from "lucide-react";
+import { Calendar, User, Package, Factory, FileText, Download, FileIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -48,9 +48,6 @@ interface PartDetailsDialogProps {
 export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialogProps) => {
   const [files, setFiles] = useState<PartFile[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
-  const [fileToDelete, setFileToDelete] = useState<{ id: string; url: string } | null>(null);
-  const [editingFileId, setEditingFileId] = useState<string | null>(null);
-  const [editVersion, setEditVersion] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -155,107 +152,6 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
     return 0;
   };
 
-  const isLatestVersion = (file: PartFile) => {
-    const categoryFiles = files.filter(f => f.category === file.category);
-    if (categoryFiles.length === 0) return true;
-    
-    const sortedFiles = [...categoryFiles].sort((a, b) => compareVersions(b.version, a.version));
-    return sortedFiles[0].id === file.id;
-  };
-
-  const handleDeleteFile = async () => {
-    if (!fileToDelete) return;
-    
-    try {
-      await supabase.storage.from('part-files').remove([fileToDelete.url]);
-      
-      const { error } = await supabase
-        .from('part_files')
-        .delete()
-        .eq('id', fileToDelete.id);
-      
-      if (error) throw error;
-      
-      setFiles(prev => prev.filter(f => f.id !== fileToDelete.id));
-      
-      toast({
-        title: "Fájl törölve",
-        description: "A fájl sikeresen törölve lett."
-      });
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      toast({
-        title: "Hiba",
-        description: "Hiba történt a fájl törlésekor.",
-        variant: "destructive"
-      });
-    } finally {
-      setFileToDelete(null);
-    }
-  };
-
-  const handleSaveVersion = async (fileId: string) => {
-    if (!editVersion.trim()) {
-      toast({
-        title: "Hiányzó verzió",
-        description: "A verzió szám nem lehet üres!",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const file = files.find(f => f.id === fileId);
-    if (!file) return;
-
-    if (compareVersions(editVersion, "0.0.0") <= 0) {
-      toast({
-        title: "Érvénytelen verzió",
-        description: "A verzió számnak nagyobbnak kell lennie, mint 0.0.0 (minimum: 0.0.1)",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const categoryFiles = files.filter(f => f.category === file.category && f.id !== fileId);
-    const versionExists = categoryFiles.some(f => f.version === editVersion);
-    
-    if (versionExists) {
-      toast({
-        title: "Érvénytelen verzió",
-        description: "Ez a verzió szám már létezik ebben a kategóriában!",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('part_files')
-        .update({ version: editVersion })
-        .eq('id', fileId);
-      
-      if (error) throw error;
-      
-      setFiles(prev => 
-        prev.map(f => f.id === fileId ? { ...f, version: editVersion } : f)
-      );
-      
-      setEditingFileId(null);
-      setEditVersion("");
-      
-      toast({
-        title: "Verzió frissítve",
-        description: "A verzió szám sikeresen módosítva lett."
-      });
-    } catch (error) {
-      console.error('Error updating version:', error);
-      toast({
-        title: "Hiba",
-        description: "Hiba történt a verzió frissítésekor.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const groupFilesByCategory = () => {
     const grouped: Record<string, PartFile[]> = {
@@ -276,25 +172,7 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
   const filesByCategory = groupFilesByCategory();
 
   return (
-    <>
-      <AlertDialog open={!!fileToDelete} onOpenChange={(open) => !open && setFileToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Biztosan törölni szeretnéd ezt a fájlt?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Ez a művelet nem vonható vissza. A fájl véglegesen törlődik.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Mégse</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteFile} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Törlés
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">{part.name}</DialogTitle>
@@ -389,88 +267,24 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
                   // Single file - show without accordion
                   if (categoryFiles.length === 1) {
                     const file = categoryFiles[0];
-                    const isLatest = isLatestVersion(file);
-                    const isEditing = editingFileId === file.id;
                     
                     return (
                       <div key={category} className="border rounded-lg p-3">
                         <h4 className="text-sm font-semibold mb-2">{getCategoryLabel(category, 1)}</h4>
                         <div className="flex items-center justify-between p-2 border rounded-md bg-muted/30">
                           <div className="flex-1">
-                            {isEditing ? (
-                              <div className="flex items-center gap-2">
-                                <Label className="text-xs">Verzió:</Label>
-                                <Input
-                                  type="text"
-                                  value={editVersion}
-                                  onChange={(e) => setEditVersion(e.target.value)}
-                                  className="h-7 text-xs w-24"
-                                  placeholder={file.version}
-                                  autoFocus
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleSaveVersion(file.id)}
-                                  className="h-7 w-7 p-0"
-                                >
-                                  <Check className="h-4 w-4 text-green-600" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingFileId(null);
-                                    setEditVersion("");
-                                  }}
-                                  className="h-7 w-7 p-0"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <>
-                                <p className="text-sm font-medium">Verzió: {file.version}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Feltöltve: {formatDate(file.created_at)}
-                                </p>
-                              </>
-                            )}
+                            <p className="text-sm font-medium">Verzió: {file.version}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Feltöltve: {formatDate(file.created_at)}
+                            </p>
                           </div>
-                          {!isEditing && (
-                            <div className="flex items-center gap-1">
-                              {isLatest && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingFileId(file.id);
-                                    setEditVersion(file.version);
-                                  }}
-                                  title="Verzió szerkesztése"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setFileToDelete({ id: file.id, url: file.file_url })}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                disabled={!isLatest}
-                                title={isLatest ? "Fájl törlése" : "Csak a legutóbbi verzió törölhető"}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     );
@@ -485,93 +299,26 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
                         </AccordionTrigger>
                         <AccordionContent className="px-3">
                           <div className="space-y-2">
-                            {categoryFiles.map((file) => {
-                              const isLatest = isLatestVersion(file);
-                              const isEditing = editingFileId === file.id;
-                              
-                              return (
-                                <div 
-                                  key={file.id} 
-                                  className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/50 transition-colors"
-                                >
-                                  <div className="flex-1">
-                                    {isEditing ? (
-                                      <div className="flex items-center gap-2">
-                                        <Label className="text-xs">Verzió:</Label>
-                                        <Input
-                                          type="text"
-                                          value={editVersion}
-                                          onChange={(e) => setEditVersion(e.target.value)}
-                                          className="h-7 text-xs w-24"
-                                          placeholder={file.version}
-                                          autoFocus
-                                        />
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleSaveVersion(file.id)}
-                                          className="h-7 w-7 p-0"
-                                        >
-                                          <Check className="h-4 w-4 text-green-600" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => {
-                                            setEditingFileId(null);
-                                            setEditVersion("");
-                                          }}
-                                          className="h-7 w-7 p-0"
-                                        >
-                                          <X className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    ) : (
-                                      <>
-                                        <p className="text-sm font-medium">Verzió: {file.version}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                          Feltöltve: {formatDate(file.created_at)}
-                                        </p>
-                                      </>
-                                    )}
-                                  </div>
-                                  {!isEditing && (
-                                    <div className="flex items-center gap-1">
-                                      {isLatest && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => {
-                                            setEditingFileId(file.id);
-                                            setEditVersion(file.version);
-                                          }}
-                                          title="Verzió szerkesztése"
-                                        >
-                                          <Edit2 className="h-4 w-4" />
-                                        </Button>
-                                      )}
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm"
-                                        onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
-                                      >
-                                        <Download className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setFileToDelete({ id: file.id, url: file.file_url })}
-                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        disabled={!isLatest}
-                                        title={isLatest ? "Fájl törlése" : "Csak a legutóbbi verzió törölhető"}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  )}
+                            {categoryFiles.map((file) => (
+                              <div 
+                                key={file.id} 
+                                className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/50 transition-colors"
+                              >
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium">Verzió: {file.version}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Feltöltve: {formatDate(file.created_at)}
+                                  </p>
                                 </div>
-                              );
-                            })}
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
                           </div>
                         </AccordionContent>
                       </AccordionItem>
@@ -598,7 +345,6 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
           </div>
         </div>
       </DialogContent>
-      </Dialog>
-    </>
+    </Dialog>
   );
 };
