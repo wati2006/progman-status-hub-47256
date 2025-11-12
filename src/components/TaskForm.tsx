@@ -58,6 +58,7 @@ interface NewFile {
 
 export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [department, setDepartment] = useState(part?.department || "");
+  const [partNumber, setPartNumber] = useState(part?.part_number || "");
   const [name, setName] = useState(part?.name || "");
   const [description, setDescription] = useState(part?.description || "");
   const [manufacturedPurchased, setManufacturedPurchased] = useState(part?.manufactured_purchased || "gyartott");
@@ -83,6 +84,28 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       loadExistingFiles();
     }
   }, [part?.id]);
+
+  // Generate new part number when department changes in edit mode
+  useEffect(() => {
+    if (part && department && department !== part.department) {
+      generateNewPartNumber();
+    }
+  }, [department, part]);
+
+  const generateNewPartNumber = async () => {
+    try {
+      const { data, error } = await supabase.rpc('generate_part_number', {
+        dept: department
+      });
+      
+      if (error) throw error;
+      if (data) {
+        setPartNumber(data);
+      }
+    } catch (error) {
+      console.error('Error generating part number:', error);
+    }
+  };
 
   const loadExistingFiles = async () => {
     if (!part?.id) return;
@@ -291,6 +314,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
         responsible_company: responsibleCompany || null,
         approver: approver || null,
         status,
+        ...(part && partNumber !== part.part_number ? { part_number: partNumber } : {})
       };
 
       let partId = part?.id;
@@ -535,7 +559,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
         {part && (
           <div className="space-y-2">
             <Label>Rajzszám</Label>
-            <Input value={part.part_number} disabled className="bg-muted" />
+            <Input value={partNumber} disabled className="bg-muted" />
           </div>
         )}
 
