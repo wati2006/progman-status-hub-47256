@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Loader2, Plus, Upload } from "lucide-react";
+import { Trash2, Loader2, Plus, Upload, Edit2, Check, X } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface PartFile {
   id: string;
@@ -72,6 +73,9 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [focusedFileIndex, setFocusedFileIndex] = useState<number | null>(null);
+  const [fileToDelete, setFileToDelete] = useState<{ id: string; url: string } | null>(null);
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
+  const [editVersion, setEditVersion] = useState("");
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -184,22 +188,32 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
     setNewFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleDeleteExistingFile = async (fileId: string, fileUrl: string) => {
+  const isLatestVersion = (file: PartFile) => {
+    const categoryFiles = existingFiles.filter(f => f.category === file.category);
+    if (categoryFiles.length === 0) return true;
+    
+    const sortedFiles = [...categoryFiles].sort((a, b) => compareVersions(b.version, a.version));
+    return sortedFiles[0].id === file.id;
+  };
+
+  const handleDeleteExistingFile = async () => {
+    if (!fileToDelete) return;
+    
     try {
       // Delete from storage
       await supabase.storage
         .from('part-files')
-        .remove([fileUrl]);
+        .remove([fileToDelete.url]);
       
       // Delete from database
       const { error } = await supabase
         .from('part_files')
         .delete()
-        .eq('id', fileId);
+        .eq('id', fileToDelete.id);
       
       if (error) throw error;
       
-      setExistingFiles(prev => prev.filter(f => f.id !== fileId));
+      setExistingFiles(prev => prev.filter(f => f.id !== fileToDelete.id));
       
       toast({
         title: "Fájl törölve",
@@ -210,6 +224,73 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       toast({
         title: "Hiba",
         description: "Hiba történt a fájl törlésekor.",
+        variant: "destructive"
+      });
+    } finally {
+      setFileToDelete(null);
+    }
+  };
+
+  const handleSaveVersion = async (fileId: string) => {
+    if (!editVersion.trim()) {
+      toast({
+        title: "Hiányzó verzió",
+        description: "A verzió szám nem lehet üres!",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const file = existingFiles.find(f => f.id === fileId);
+    if (!file) return;
+
+    // Check if version is greater than 0.0.0
+    if (compareVersions(editVersion, "0.0.0") <= 0) {
+      toast({
+        title: "Érvénytelen verzió",
+        description: "A verzió számnak nagyobbnak kell lennie, mint 0.0.0 (minimum: 0.0.1)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if version already exists in this category
+    const categoryFiles = existingFiles.filter(f => f.category === file.category && f.id !== fileId);
+    const versionExists = categoryFiles.some(f => f.version === editVersion);
+    
+    if (versionExists) {
+      toast({
+        title: "Érvénytelen verzió",
+        description: "Ez a verzió szám már létezik ebben a kategóriában!",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('part_files')
+        .update({ version: editVersion })
+        .eq('id', fileId);
+      
+      if (error) throw error;
+      
+      setExistingFiles(prev => 
+        prev.map(f => f.id === fileId ? { ...f, version: editVersion } : f)
+      );
+      
+      setEditingFileId(null);
+      setEditVersion("");
+      
+      toast({
+        title: "Verzió frissítve",
+        description: "A verzió szám sikeresen módosítva lett."
+      });
+    } catch (error) {
+      console.error('Error updating version:', error);
+      toast({
+        title: "Hiba",
+        description: "Hiba történt a verzió frissítésekor.",
         variant: "destructive"
       });
     }
@@ -384,26 +465,88 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
           </div>
         ) : (
           <>
-            {categoryFiles.map((file) => (
-              <div key={file.id} className="flex items-center gap-2 p-3 border rounded-md bg-background">
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Verzió: {file.version}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(file.created_at).toLocaleDateString('hu-HU')}
-                  </p>
+            {categoryFiles.map((file) => {
+              const isLatest = isLatestVersion(file);
+              const isEditing = editingFileId === file.id;
+              
+              return (
+                <div key={file.id} className="flex items-center gap-2 p-3 border rounded-md bg-background">
+                  <div className="flex-1">
+                    {isEditing ? (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs">Verzió:</Label>
+                        <Input
+                          type="text"
+                          value={editVersion}
+                          onChange={(e) => setEditVersion(e.target.value)}
+                          className="h-7 text-xs w-24"
+                          placeholder={file.version}
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSaveVersion(file.id)}
+                          className="h-7 w-7 p-0"
+                        >
+                          <Check className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingFileId(null);
+                            setEditVersion("");
+                          }}
+                          className="h-7 w-7 p-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium">Verzió: {file.version}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(file.created_at).toLocaleDateString('hu-HU')}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  {!isEditing && (
+                    <div className="flex items-center gap-1">
+                      {isLatest && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingFileId(file.id);
+                            setEditVersion(file.version);
+                          }}
+                          disabled={isSubmitting}
+                          title="Verzió szerkesztése"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFileToDelete({ id: file.id, url: file.file_url })}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        disabled={isSubmitting || !isLatest}
+                        title={isLatest ? "Fájl törlése" : "Csak a legutóbbi verzió törölhető"}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteExistingFile(file.id, file.file_url)}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  disabled={isSubmitting}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
+              );
+            })}
 
             {categoryNewFiles.map((newFile, index) => {
               const globalIndex = newFiles.findIndex(f => f === newFile);
@@ -477,7 +620,25 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <>
+      <AlertDialog open={!!fileToDelete} onOpenChange={(open) => !open && setFileToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Biztosan törölni szeretnéd ezt a fájlt?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ez a művelet nem vonható vissza. A fájl véglegesen törlődik.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Mégse</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteExistingFile} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Törlés
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="department">Részleg *</Label>
@@ -620,6 +781,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
           {part ? "Frissítés" : "Létrehozás"}
         </Button>
       </div>
-    </form>
+      </form>
+    </>
   );
 };

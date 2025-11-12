@@ -10,6 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, User, Trash2, Upload, Loader2 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface Profile {
   id: string;
@@ -33,6 +34,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -156,6 +158,7 @@ const Profile = () => {
       if (error) throw error;
 
       setAvatarUrl(null);
+      setShowDeleteDialog(false);
       
       toast({
         title: "Sikeres törlés",
@@ -229,7 +232,25 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Biztosan törölni szeretnéd a profilképet?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ez a művelet nem vonható vissza. A profilkép véglegesen törlődik.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Mégse</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAvatar} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Törlés
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
@@ -281,7 +302,7 @@ const Profile = () => {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={handleDeleteAvatar}
+                      onClick={() => setShowDeleteDialog(true)}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -407,7 +428,8 @@ const Profile = () => {
           </CardContent>
         </Card>
       </main>
-    </div>
+      </div>
+    </>
   );
 };
 
