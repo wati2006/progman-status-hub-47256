@@ -30,7 +30,7 @@ const Auth = () => {
         data: {
           full_name: fullName,
           department: department,
-          discord_profile: discordProfile,
+          discord_profile: discordProfile && discordProfile !== "@" ? discordProfile : null,
         },
       },
     });
@@ -178,16 +178,19 @@ const Auth = () => {
                   <Input
                     id="signup-discord"
                     type="text"
-                    value={discordProfile || "@"}
+                    value={discordProfile || ""}
                     onChange={(e) => {
                       const value = e.target.value;
-                      if (value.startsWith("@")) {
-                        setDiscordProfile(value);
+                      if (value === "" || value.startsWith("@")) {
+                        setDiscordProfile(value === "" ? "" : value);
+                      } else if (!discordProfile) {
+                        setDiscordProfile("@" + value);
                       }
                     }}
                     onFocus={(e) => {
                       if (!discordProfile) {
-                        e.target.setSelectionRange(1, 1);
+                        setDiscordProfile("@");
+                        setTimeout(() => e.target.setSelectionRange(1, 1), 0);
                       }
                     }}
                   />

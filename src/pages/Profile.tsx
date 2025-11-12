@@ -189,7 +189,7 @@ const Profile = () => {
         .update({
           full_name: fullName,
           department: department || null,
-          discord_profile: discordProfile || null
+          discord_profile: discordProfile && discordProfile !== "@" ? discordProfile : null
         })
         .eq("id", user.id);
 
@@ -392,16 +392,19 @@ const Profile = () => {
                 <Input
                   id="discord_profile"
                   type="text"
-                  value={discordProfile || "@"}
+                  value={discordProfile || ""}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value.startsWith("@")) {
-                      setDiscordProfile(value);
+                    if (value === "" || value.startsWith("@")) {
+                      setDiscordProfile(value === "" ? "" : value);
+                    } else if (!discordProfile) {
+                      setDiscordProfile("@" + value);
                     }
                   }}
                   onFocus={(e) => {
                     if (!discordProfile) {
-                      e.target.setSelectionRange(1, 1);
+                      setDiscordProfile("@");
+                      setTimeout(() => e.target.setSelectionRange(1, 1), 0);
                     }
                   }}
                 />
