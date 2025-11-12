@@ -146,7 +146,6 @@ export const PartHistoryDialog = ({ partId, partName, open, onOpenChange, onUser
                       <div className="flex-1 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">Verzió: {entry.version}</span>
                             {getStatusBadge(entry.status)}
                           </div>
                           <span className="text-xs text-muted-foreground">
@@ -157,7 +156,9 @@ export const PartHistoryDialog = ({ partId, partName, open, onOpenChange, onUser
                         {entry.profiles?.full_name && entry.changed_by && (
                           <div className="flex items-center gap-2 text-sm">
                             <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Módosította: </span>
+                            <span className="text-muted-foreground">
+                              {index === history.length - 1 ? "Feltöltötte: " : "Módosította: "}
+                            </span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
