@@ -84,22 +84,25 @@ const Dashboard = () => {
       data: {
         subscription
       }
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || !session) {
         navigate("/auth");
       } else {
         setUser(session.user);
         
-        // Load user profile
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name, avatar_url")
-          .eq("id", session.user.id)
-          .maybeSingle();
-        
-        if (profile) {
-          setUserProfile(profile);
-        }
+        // Load user profile with setTimeout to prevent deadlock
+        setTimeout(() => {
+          supabase
+            .from("profiles")
+            .select("full_name, avatar_url")
+            .eq("id", session.user.id)
+            .maybeSingle()
+            .then(({ data: profile }) => {
+              if (profile) {
+                setUserProfile(profile);
+              }
+            });
+        }, 0);
       }
     });
     return () => subscription.unsubscribe();
