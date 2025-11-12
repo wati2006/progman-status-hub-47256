@@ -53,7 +53,7 @@ interface Part {
   } | null;
 }
 
-type SortField = "part_number" | "name" | "department" | "status" | "created_at";
+type SortField = "part_number" | "name" | "department" | "status" | "created_at" | "updated_at";
 type SortDirection = "asc" | "desc";
 
 interface TaskTableProps {
@@ -84,7 +84,7 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
     let aVal: any = a[sortField];
     let bVal: any = b[sortField];
 
-    if (sortField === "created_at") {
+    if (sortField === "created_at" || sortField === "updated_at") {
       aVal = new Date(aVal).getTime();
       bVal = new Date(bVal).getTime();
     }
@@ -201,13 +201,19 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
+              <TableHead className="w-[180px]">
+                <Button variant="ghost" size="sm" onClick={() => handleSort("updated_at")} className="h-8 px-2">
+                  Módosítva
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+              </TableHead>
               <TableHead className="text-right w-[140px]">Műveletek</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedParts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   Nincs megjeleníthető alkatrész
                 </TableCell>
               </TableRow>
@@ -234,6 +240,9 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
                         {part.profiles.full_name}
                       </div>
                     )}
+                  </TableCell>
+                  <TableCell className="min-w-[140px]">
+                    <div className="text-sm">{formatDate(part.updated_at)}</div>
                   </TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-2">
