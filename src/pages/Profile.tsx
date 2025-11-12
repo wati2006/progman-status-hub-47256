@@ -392,9 +392,18 @@ const Profile = () => {
                 <Input
                   id="discord_profile"
                   type="text"
-                  value={discordProfile}
-                  onChange={(e) => setDiscordProfile(e.target.value)}
-                  placeholder="@username"
+                  value={discordProfile || "@"}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.startsWith("@")) {
+                      setDiscordProfile(value);
+                    }
+                  }}
+                  onFocus={(e) => {
+                    if (!discordProfile) {
+                      e.target.setSelectionRange(1, 1);
+                    }
+                  }}
                 />
                 <p className="text-xs text-muted-foreground">
                   Opcionális

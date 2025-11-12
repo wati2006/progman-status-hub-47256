@@ -178,9 +178,18 @@ const Auth = () => {
                   <Input
                     id="signup-discord"
                     type="text"
-                    placeholder="@username"
-                    value={discordProfile}
-                    onChange={(e) => setDiscordProfile(e.target.value)}
+                    value={discordProfile || "@"}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value.startsWith("@")) {
+                        setDiscordProfile(value);
+                      }
+                    }}
+                    onFocus={(e) => {
+                      if (!discordProfile) {
+                        e.target.setSelectionRange(1, 1);
+                      }
+                    }}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
