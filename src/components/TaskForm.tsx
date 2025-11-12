@@ -232,8 +232,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   };
 
   const handleSaveVersion = async (fileId: string) => {
-    console.log('handleSaveVersion called', { fileId, editVersion });
-    
+    // Validation: version cannot be empty
     if (!editVersion.trim()) {
       toast({
         title: "Hiányzó verzió",
@@ -243,11 +242,18 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       return;
     }
 
-    const file = existingFiles.find(f => f.id === fileId);
-    console.log('Found file:', file);
-    if (!file) return;
+    // Find the file being edited
+    const currentFile = existingFiles.find(f => f.id === fileId);
+    if (!currentFile) {
+      toast({
+        title: "Hiba",
+        description: "A fájl nem található!",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    // Check if version is greater than 0.0.0
+    // Validation: version must be > 0.0.0
     if (compareVersions(editVersion, "0.0.0") <= 0) {
       toast({
         title: "Érvénytelen verzió",
@@ -257,41 +263,46 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       return;
     }
 
-    // Get all files in this category sorted by version
-    const categoryFiles = existingFiles
-      .filter(f => f.category === file.category)
+    // Get all files in the same category, sorted by version (ascending)
+    const filesInCategory = existingFiles
+      .filter(f => f.category === currentFile.category)
       .sort((a, b) => compareVersions(a.version, b.version));
     
-    // Find the current file's position
-    const currentIndex = categoryFiles.findIndex(f => f.id === fileId);
+    // Find current file position
+    const currentPosition = filesInCategory.findIndex(f => f.id === fileId);
     
-    // Get previous and next versions
-    const previousFile = currentIndex > 0 ? categoryFiles[currentIndex - 1] : null;
-    const nextFile = currentIndex < categoryFiles.length - 1 ? categoryFiles[currentIndex + 1] : null;
-    
-    // Validate: new version must be greater than previous and less than next
-    if (previousFile && compareVersions(editVersion, previousFile.version) <= 0) {
-      toast({
-        title: "Érvénytelen verzió",
-        description: `A verzió számnak nagyobbnak kell lennie, mint ${previousFile.version}`,
-        variant: "destructive"
-      });
-      return;
+    // Check constraints with previous version
+    if (currentPosition > 0) {
+      const previousVersion = filesInCategory[currentPosition - 1].version;
+      if (compareVersions(editVersion, previousVersion) <= 0) {
+        toast({
+          title: "Érvénytelen verzió",
+          description: `A verzió számnak nagyobbnak kell lennie, mint ${previousVersion}`,
+          variant: "destructive"
+        });
+        return;
+      }
     }
     
-    if (nextFile && compareVersions(editVersion, nextFile.version) >= 0) {
-      toast({
-        title: "Érvénytelen verzió",
-        description: `A verzió számnak kisebbnek kell lennie, mint ${nextFile.version}`,
-        variant: "destructive"
-      });
-      return;
+    // Check constraints with next version
+    if (currentPosition < filesInCategory.length - 1) {
+      const nextVersion = filesInCategory[currentPosition + 1].version;
+      if (compareVersions(editVersion, nextVersion) >= 0) {
+        toast({
+          title: "Érvénytelen verzió",
+          description: `A verzió számnak kisebbnek kell lennie, mint ${nextVersion}`,
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
-    // Check if version already exists in this category
-    const versionExists = categoryFiles.some(f => f.id !== fileId && f.version === editVersion);
+    // Check if version already exists (excluding current file)
+    const isDuplicate = filesInCategory.some(
+      f => f.id !== fileId && f.version === editVersion
+    );
     
-    if (versionExists) {
+    if (isDuplicate) {
       toast({
         title: "Érvénytelen verzió",
         description: "Ez a verzió szám már létezik ebben a kategóriában!",
@@ -300,25 +311,19 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       return;
     }
 
+    // Update database
     try {
-      console.log('Updating database with version:', editVersion);
       const { error } = await supabase
         .from('part_files')
         .update({ version: editVersion })
         .eq('id', fileId);
       
-      if (error) {
-        console.error('Database update error:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('Database updated successfully, updating state');
-      setExistingFiles(prev => {
-        const updated = prev.map(f => f.id === fileId ? { ...f, version: editVersion } : f);
-        console.log('Updated existingFiles:', updated);
-        return updated;
-      });
+      // Update local state
+      await loadExistingFiles();
       
+      // Reset editing state
       setEditingFileId(null);
       setEditVersion("");
       
