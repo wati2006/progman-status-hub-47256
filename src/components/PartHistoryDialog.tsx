@@ -50,19 +50,42 @@ export const PartHistoryDialog = ({ partId, partName, open, onOpenChange, onUser
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: historyData, error: historyError } = await supabase
         .from('parts_history')
-        .select(`
-          *,
-          profiles:changed_by (
-            full_name
-          )
-        `)
+        .select('*')
         .eq('part_id', partId)
         .order('changed_at', { ascending: false });
       
-      if (error) throw error;
-      setHistory(data || []);
+      if (historyError) throw historyError;
+      
+      if (!historyData || historyData.length === 0) {
+        setHistory([]);
+        return;
+      }
+      
+      // Get unique user IDs
+      const userIds = [...new Set(historyData.map(h => h.changed_by).filter(Boolean))];
+      
+      // Fetch user profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+      
+      if (profilesError) throw profilesError;
+      
+      // Create a map of user ID to full name
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.id, { full_name: p.full_name }])
+      );
+      
+      // Combine history with profiles
+      const enrichedHistory = historyData.map(entry => ({
+        ...entry,
+        profiles: entry.changed_by ? profilesMap.get(entry.changed_by) || null : null
+      }));
+      
+      setHistory(enrichedHistory);
     } catch (error) {
       console.error('Error loading history:', error);
     } finally {
