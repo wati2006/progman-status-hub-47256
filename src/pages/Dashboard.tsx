@@ -9,6 +9,7 @@ import { LogOut, Plus, User as UserIcon } from "lucide-react";
 import { TaskTable } from "@/components/TaskTable";
 import { TaskForm } from "@/components/TaskForm";
 import { TaskFilters } from "@/components/TaskFilters";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 
@@ -191,6 +192,7 @@ const Dashboard = () => {
                   </span>
                 )}
               </div>
+              <ThemeToggle />
               <Button variant="outline" onClick={() => navigate("/profile")}>
                 <UserIcon className="mr-2 h-4 w-4" />
                 Profil
