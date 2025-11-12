@@ -108,7 +108,7 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
       elutasitva: { variant: "destructive", label: "Elutasítva" }
     };
     const { variant, label, className } = config[status];
-    return <Badge variant={variant} className={className}>{label}</Badge>;
+    return <Badge variant={variant} className={`whitespace-nowrap ${className || ''}`}>{label}</Badge>;
   };
 
   const formatDate = (dateString: string) => {
@@ -189,7 +189,7 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead className="w-[140px]">
+              <TableHead className="w-[180px]">
                 <Button variant="ghost" size="sm" onClick={() => handleSort("status")} className="h-8 px-2">
                   Státusz
                   <ArrowUpDown className="ml-2 h-4 w-4" />
