@@ -117,7 +117,15 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
     }
   };
 
-  const getCategoryLabel = (category: string) => {
+  const getCategoryLabel = (category: string, count: number = 0) => {
+    if (count === 1) {
+      switch (category) {
+        case 'cad_model': return 'CAD modell';
+        case 'technical_drawing': return 'Műszaki rajz';
+        case 'documentation': return 'Dokumentáció';
+        default: return category;
+      }
+    }
     switch (category) {
       case 'cad_model': return 'CAD modellek';
       case 'technical_drawing': return 'Műszaki rajzok';
@@ -233,43 +241,71 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
             ) : files.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nincsenek feltöltött fájlok</p>
             ) : (
-              <Accordion type="single" collapsible className="w-full">
+              <div className="space-y-3">
                 {Object.entries(filesByCategory).map(([category, categoryFiles]) => {
                   if (categoryFiles.length === 0) return null;
                   
-                  return (
-                    <AccordionItem key={category} value={category}>
-                      <AccordionTrigger className="text-sm font-semibold">
-                        {getCategoryLabel(category)} ({categoryFiles.length})
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-2">
-                          {categoryFiles.map((file) => (
-                            <div 
-                              key={file.id} 
-                              className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/50 transition-colors"
-                            >
-                              <div className="flex-1">
-                                <p className="text-sm font-medium">Verzió: {file.version}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Feltöltve: {formatDate(file.created_at)}
-                                </p>
-                              </div>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
+                  // Single file - show without accordion
+                  if (categoryFiles.length === 1) {
+                    const file = categoryFiles[0];
+                    return (
+                      <div key={category} className="border rounded-lg p-3">
+                        <h4 className="text-sm font-semibold mb-2">{getCategoryLabel(category, 1)}</h4>
+                        <div className="flex items-center justify-between p-2 border rounded-md bg-muted/30">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Verzió: {file.version}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Feltöltve: {formatDate(file.created_at)}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                      </div>
+                    );
+                  }
+                  
+                  // Multiple files - show with accordion
+                  return (
+                    <Accordion key={category} type="single" collapsible className="w-full border rounded-lg">
+                      <AccordionItem value={category} className="border-none">
+                        <AccordionTrigger className="text-sm font-semibold px-3">
+                          {getCategoryLabel(category, categoryFiles.length)} ({categoryFiles.length})
+                        </AccordionTrigger>
+                        <AccordionContent className="px-3">
+                          <div className="space-y-2">
+                            {categoryFiles.map((file) => (
+                              <div 
+                                key={file.id} 
+                                className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/50 transition-colors"
+                              >
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium">Verzió: {file.version}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Feltöltve: {formatDate(file.created_at)}
+                                  </p>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
                   );
                 })}
-              </Accordion>
+              </div>
             )}
           </div>
 

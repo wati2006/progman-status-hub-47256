@@ -131,6 +131,13 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
     return 0;
   };
 
+  const incrementVersion = (version: string): string => {
+    if (version === "0.0.0") return "1.0.0";
+    const parts = version.split('.').map(Number);
+    parts[parts.length - 1] += 1;
+    return parts.join('.');
+  };
+
   const handleAddFile = (category: string) => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -141,11 +148,10 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        const highestVersion = getHighestVersion(category);
         setNewFiles(prev => [...prev, { 
           file, 
           category, 
-          version: highestVersion === "0.0.0" ? "1.0.0" : highestVersion 
+          version: ''
         }]);
       }
     };
@@ -210,11 +216,21 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
 
     // Validate versions
     for (const newFile of newFiles) {
+      if (!newFile.version.trim()) {
+        toast({
+          title: "Hiányzó verzió",
+          description: "Minden fájlhoz meg kell adni a verzió számot!",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const highestVersion = getHighestVersion(newFile.category);
-      if (highestVersion !== "0.0.0" && compareVersions(newFile.version, highestVersion) <= 0) {
+      const minVersion = incrementVersion(highestVersion);
+      if (compareVersions(newFile.version, highestVersion) <= 0) {
         toast({
           title: "Érvénytelen verzió",
-          description: `A verzió számnak nagyobbnak kell lennie, mint ${highestVersion}`,
+          description: `A verzió számnak nagyobbnak kell lennie, mint ${highestVersion} (minimum: ${minVersion})`,
           variant: "destructive"
         });
         return;
@@ -378,12 +394,12 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
                         type="text"
                         value={newFile.version}
                         onChange={(e) => handleVersionChange(globalIndex, e.target.value)}
-                        placeholder="1.0.0"
+                        placeholder={incrementVersion(getHighestVersion(category))}
                         className="h-7 text-xs w-24"
                         disabled={isSubmitting}
                       />
                       <span className="text-xs text-muted-foreground">
-                        (min: {getHighestVersion(category)})
+                        (min: {incrementVersion(getHighestVersion(category))})
                       </span>
                     </div>
                   </div>
