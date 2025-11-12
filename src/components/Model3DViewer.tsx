@@ -139,7 +139,10 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
     loadModel();
   }
 
-  const fileExtension = fileName.toLowerCase().split('.').pop();
+  // Extract file extension from the actual file URL, not the display name
+  const urlParts = fileUrl.split('/');
+  const actualFileName = urlParts[urlParts.length - 1];
+  const fileExtension = actualFileName.toLowerCase().split('.').pop();
   const isSupportedFormat = ['step', 'stp'].includes(fileExtension || '');
 
   return (
