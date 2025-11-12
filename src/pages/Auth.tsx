@@ -178,18 +178,17 @@ const Auth = () => {
                   <Input
                     id="signup-discord"
                     type="text"
-                    value={discordProfile || ""}
+                    value={discordProfile || "@"}
                     onChange={(e) => {
                       const value = e.target.value;
-                      if (value === "" || value.startsWith("@")) {
-                        setDiscordProfile(value === "" ? "" : value);
-                      } else if (!discordProfile) {
-                        setDiscordProfile("@" + value);
+                      if (value === "" || !value.startsWith("@")) {
+                        setDiscordProfile("@");
+                      } else {
+                        setDiscordProfile(value);
                       }
                     }}
                     onFocus={(e) => {
-                      if (!discordProfile) {
-                        setDiscordProfile("@");
+                      if (!discordProfile || discordProfile === "@") {
                         setTimeout(() => e.target.setSelectionRange(1, 1), 0);
                       }
                     }}
