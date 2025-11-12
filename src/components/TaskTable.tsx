@@ -53,7 +53,7 @@ interface Part {
   } | null;
 }
 
-type SortField = "part_number" | "name" | "department" | "status" | "created_at";
+type SortField = "part_number" | "name" | "department" | "status" | "created_at" | "updated_at";
 type SortDirection = "asc" | "desc";
 
 interface TaskTableProps {
@@ -84,7 +84,7 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
     let aVal: any = a[sortField];
     let bVal: any = b[sortField];
 
-    if (sortField === "created_at") {
+    if (sortField === "created_at" || sortField === "updated_at") {
       aVal = new Date(aVal).getTime();
       bVal = new Date(bVal).getTime();
     }
@@ -198,6 +198,12 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
               <TableHead className="w-[180px]">
                 <Button variant="ghost" size="sm" onClick={() => handleSort("created_at")} className="h-8 px-2">
                   Létrehozva
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead className="w-[180px]">
+                <Button variant="ghost" size="sm" onClick={() => handleSort("updated_at")} className="h-8 px-2">
+                  Módosítva
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
