@@ -135,9 +135,11 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
   };
 
   // Load model when dialog opens
-  if (open && !signedUrl && !loading) {
-    loadModel();
-  }
+  useEffect(() => {
+    if (open && !signedUrl) {
+      loadModel();
+    }
+  }, [open]);
 
   // Extract file extension from the actual file URL, not the display name
   const urlParts = fileUrl.split('/');
