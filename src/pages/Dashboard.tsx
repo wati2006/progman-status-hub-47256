@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, Plus, User as UserIcon } from "lucide-react";
 import { TaskTable } from "@/components/TaskTable";
 import { TaskForm } from "@/components/TaskForm";
@@ -46,6 +47,7 @@ interface Part {
 }
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<{ full_name: string | null; avatar_url: string | null } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,17 +67,39 @@ const Dashboard = () => {
         return;
       }
       setUser(session.user);
+      
+      // Load user profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      
+      if (profile) {
+        setUserProfile(profile);
+      }
     };
     checkAuth();
     const {
       data: {
         subscription
       }
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_OUT" || !session) {
         navigate("/auth");
       } else {
         setUser(session.user);
+        
+        // Load user profile
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        
+        if (profile) {
+          setUserProfile(profile);
+        }
       }
     });
     return () => subscription.unsubscribe();
@@ -128,6 +152,13 @@ const Dashboard = () => {
     setIsDialogOpen(false);
     setEditingPart(null);
   };
+
+  const getAvatarUrl = (path: string | null) => {
+    if (!path) return null;
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-lg text-muted-foreground">Betöltés...</div>
@@ -144,11 +175,19 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {user?.user_metadata?.full_name && (
-                <span className="text-sm text-foreground font-medium">
-                  {user.user_metadata.full_name}
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={userProfile?.avatar_url ? getAvatarUrl(userProfile.avatar_url) || undefined : undefined} />
+                  <AvatarFallback className="bg-primary/10">
+                    <UserIcon className="h-4 w-4 text-primary" />
+                  </AvatarFallback>
+                </Avatar>
+                {(userProfile?.full_name || user?.user_metadata?.full_name) && (
+                  <span className="text-sm text-foreground font-medium">
+                    {userProfile?.full_name || user?.user_metadata?.full_name}
+                  </span>
+                )}
+              </div>
               <Button variant="outline" onClick={() => navigate("/profile")}>
                 <UserIcon className="mr-2 h-4 w-4" />
                 Profil

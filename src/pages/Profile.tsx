@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, User } from "lucide-react";
+import { ArrowLeft, Save, User, Trash2, Upload, Loader2 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -16,6 +17,7 @@ interface Profile {
   full_name: string | null;
   department: string | null;
   discord_profile: string | null;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -26,8 +28,11 @@ const Profile = () => {
   const [fullName, setFullName] = useState("");
   const [department, setDepartment] = useState("");
   const [discordProfile, setDiscordProfile] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -70,6 +75,7 @@ const Profile = () => {
         setFullName(data.full_name || "");
         setDepartment(data.department || "");
         setDiscordProfile(data.discord_profile || "");
+        setAvatarUrl(data.avatar_url);
       }
     } catch (error: any) {
       toast({
@@ -82,12 +88,99 @@ const Profile = () => {
     }
   };
 
+  const getAvatarUrl = (path: string | null) => {
+    if (!path) return null;
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!user) return;
+    
+    setIsUploadingAvatar(true);
+    try {
+      // Delete old avatar if exists
+      if (avatarUrl) {
+        await supabase.storage.from('avatars').remove([avatarUrl]);
+      }
+
+      // Upload new avatar
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: fileName })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(fileName);
+      setAvatarFile(null);
+      
+      toast({
+        title: "Sikeres feltöltés",
+        description: "A profilkép frissítve lett."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Hiba történt",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!user || !avatarUrl) return;
+
+    try {
+      // Delete from storage
+      await supabase.storage.from('avatars').remove([avatarUrl]);
+
+      // Update profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setAvatarUrl(null);
+      
+      toast({
+        title: "Sikeres törlés",
+        description: "A profilkép törölve lett."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Hiba történt",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setIsSaving(true);
     try {
+      // Upload avatar if selected
+      if (avatarFile) {
+        await handleAvatarUpload(avatarFile);
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -157,9 +250,12 @@ const Profile = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-8 w-8 text-primary" />
-              </div>
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={avatarUrl ? getAvatarUrl(avatarUrl) || undefined : undefined} />
+                <AvatarFallback className="bg-primary/10">
+                  <User className="h-8 w-8 text-primary" />
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <CardTitle>Felhasználói adatok</CardTitle>
                 <CardDescription>
@@ -170,6 +266,47 @@ const Profile = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-6">
+              <div className="space-y-2">
+                <Label>Profilkép</Label>
+                {avatarUrl ? (
+                  <div className="flex items-center gap-3 p-3 border rounded-md bg-card">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={getAvatarUrl(avatarUrl) || undefined} />
+                      <AvatarFallback>
+                        <User className="h-6 w-6" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm text-muted-foreground flex-1">Profilkép feltöltve</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleDeleteAvatar}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : isUploadingAvatar ? (
+                  <div className="flex items-center gap-2 p-3 border rounded-md bg-primary/10">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-sm text-primary font-medium">Profilkép feltöltése...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                      disabled={isSaving}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Tölts fel egy profilképet (JPG, PNG, max 2MB)
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email cím</Label>
                 <Input
