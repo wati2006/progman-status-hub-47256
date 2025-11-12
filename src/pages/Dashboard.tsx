@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Plus, User as UserIcon } from "lucide-react";
+import { LogOut, Plus, User as UserIcon, Users } from "lucide-react";
 import { TaskTable } from "@/components/TaskTable";
 import { TaskForm } from "@/components/TaskForm";
 import { TaskFilters } from "@/components/TaskFilters";
@@ -193,6 +193,10 @@ const Dashboard = () => {
                 )}
               </div>
               <ThemeToggle />
+              <Button variant="outline" onClick={() => navigate("/members")}>
+                <Users className="mr-2 h-4 w-4" />
+                Csapattagok
+              </Button>
               <Button variant="outline" onClick={() => navigate("/profile")}>
                 <UserIcon className="mr-2 h-4 w-4" />
                 Profil
