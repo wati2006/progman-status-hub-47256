@@ -155,7 +155,7 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
   const canPreview = (category: string, fileUrl: string) => {
     if (category !== 'cad_model') return false;
     const extension = fileUrl.toLowerCase().split('.').pop();
-    return ['glb', 'gltf'].includes(extension || '');
+    return ['glb', 'gltf', 'step', 'stp'].includes(extension || '');
   };
 
   const compareVersions = (v1: string, v2: string): number => {

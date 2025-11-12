@@ -1,11 +1,13 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Stage, useGLTF, Html } from "@react-three/drei";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Maximize2, Download } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import occtimportjs from "occt-import-js";
+import * as THREE from "three";
 
 interface Model3DViewerProps {
   fileUrl: string;
@@ -14,21 +16,93 @@ interface Model3DViewerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function Model({ url }: { url: string }) {
-  try {
-    // Support for GLB/GLTF files
-    const { scene } = useGLTF(url);
-    return <primitive object={scene} />;
-  } catch (error) {
-    console.error("Error loading model:", error);
+function Model({ url, isStep }: { url: string; isStep: boolean }) {
+  const [geometry, setGeometry] = useState<THREE.Group | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isStep) return;
+
+    const loadStepFile = async () => {
+      try {
+        const occt = await occtimportjs();
+        const response = await fetch(url);
+        const buffer = await response.arrayBuffer();
+        const fileBuffer = new Uint8Array(buffer);
+
+        const result = occt.ReadStepFile(fileBuffer, null);
+        
+        if (!result.success) {
+          throw new Error("Failed to parse STEP file");
+        }
+
+        const group = new THREE.Group();
+        
+        result.meshes.forEach((mesh: any) => {
+          const geometry = new THREE.BufferGeometry();
+          
+          const vertices = new Float32Array(mesh.attributes.position.array);
+          geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+          
+          if (mesh.attributes.normal) {
+            const normals = new Float32Array(mesh.attributes.normal.array);
+            geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+          }
+          
+          if (mesh.index) {
+            const indices = new Uint32Array(mesh.index.array);
+            geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+          }
+          
+          const material = new THREE.MeshStandardMaterial({
+            color: mesh.color || 0x808080,
+            metalness: 0.3,
+            roughness: 0.7,
+          });
+          
+          const meshObj = new THREE.Mesh(geometry, material);
+          group.add(meshObj);
+        });
+
+        setGeometry(group);
+      } catch (err) {
+        console.error("Error loading STEP file:", err);
+        setError("Nem sikerült betölteni a STEP modellt");
+      }
+    };
+
+    loadStepFile();
+  }, [url, isStep]);
+
+  if (!isStep) {
+    try {
+      const { scene } = useGLTF(url);
+      return <primitive object={scene} />;
+    } catch (error) {
+      console.error("Error loading model:", error);
+      return (
+        <Html center>
+          <div className="text-destructive">
+            Nem sikerült betölteni a modellt
+          </div>
+        </Html>
+      );
+    }
+  }
+
+  if (error) {
     return (
       <Html center>
-        <div className="text-destructive">
-          Nem sikerült betölteni a modellt
-        </div>
+        <div className="text-destructive">{error}</div>
       </Html>
     );
   }
+
+  if (!geometry) {
+    return <Loader />;
+  }
+
+  return <primitive object={geometry} />;
 }
 
 function Loader() {
@@ -84,7 +158,8 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
   }
 
   const fileExtension = fileName.toLowerCase().split('.').pop();
-  const isSupportedFormat = ['glb', 'gltf'].includes(fileExtension || '');
+  const isSupportedFormat = ['glb', 'gltf', 'step', 'stp'].includes(fileExtension || '');
+  const isStepFormat = ['step', 'stp'].includes(fileExtension || '');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -109,7 +184,7 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center space-y-4">
                 <p className="text-muted-foreground">
-                  A 3D előnézet csak GLB és GLTF formátumokat támogat.
+                  A 3D előnézet csak STEP, GLB és GLTF formátumokat támogat.
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Jelenlegi fájl: .{fileExtension}
@@ -131,7 +206,7 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
             <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
               <Suspense fallback={<Loader />}>
                 <Stage environment="city" intensity={0.6}>
-                  <Model url={signedUrl} />
+                  <Model url={signedUrl} isStep={isStepFormat} />
                 </Stage>
                 <OrbitControls makeDefault />
               </Suspense>
