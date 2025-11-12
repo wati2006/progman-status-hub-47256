@@ -2,9 +2,13 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, User } from "lucide-react";
+import { Calendar, User, GitCompare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { PartCompareDialog } from "./PartCompareDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface HistoryEntry {
   id: string;
@@ -38,6 +42,9 @@ interface PartHistoryDialogProps {
 export const PartHistoryDialog = ({ partId, partName, open, onOpenChange, onUserClick }: PartHistoryDialogProps) => {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
+  const [compareDialogOpen, setCompareDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (partId && open) {
@@ -93,6 +100,41 @@ export const PartHistoryDialog = ({ partId, partName, open, onOpenChange, onUser
     }
   };
 
+  const handleCheckboxChange = (entryId: string, checked: boolean) => {
+    if (checked) {
+      if (selectedEntries.length >= 2) {
+        toast({
+          title: "Maximum 2 verzió",
+          description: "Csak 2 verziót választhatsz ki az összehasonlításhoz.",
+          variant: "destructive"
+        });
+        return;
+      }
+      setSelectedEntries([...selectedEntries, entryId]);
+    } else {
+      setSelectedEntries(selectedEntries.filter(id => id !== entryId));
+    }
+  };
+
+  const handleCompare = () => {
+    if (selectedEntries.length !== 2) {
+      toast({
+        title: "Válassz 2 verziót",
+        description: "Pontosan 2 verziót kell kiválasztanod az összehasonlításhoz.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setCompareDialogOpen(true);
+  };
+
+  const getSelectedEntries = (): [HistoryEntry, HistoryEntry] | null => {
+    if (selectedEntries.length !== 2) return null;
+    const entries = selectedEntries.map(id => history.find(h => h.id === id)).filter(Boolean) as HistoryEntry[];
+    if (entries.length !== 2) return null;
+    return [entries[0], entries[1]];
+  };
+
   const getStatusBadge = (status: HistoryEntry["status"]) => {
     const config: Record<HistoryEntry["status"], { variant: "default" | "secondary" | "destructive"; label: string; className?: string }> = {
       terv: { variant: "secondary", label: "Terv" },
@@ -117,14 +159,29 @@ export const PartHistoryDialog = ({ partId, partName, open, onOpenChange, onUser
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Szerkesztési történet</DialogTitle>
-          {partName && (
-            <p className="text-sm text-muted-foreground">{partName}</p>
-          )}
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <DialogTitle className="text-2xl">Szerkesztési történet</DialogTitle>
+                {partName && (
+                  <p className="text-sm text-muted-foreground">{partName}</p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCompare}
+                disabled={selectedEntries.length !== 2}
+                className="ml-4"
+              >
+                <GitCompare className="h-4 w-4 mr-2" />
+                Összehasonlít ({selectedEntries.length}/2)
+              </Button>
+            </div>
+          </DialogHeader>
 
         <ScrollArea className="h-[60vh] pr-4">
           {isLoading ? (
@@ -140,8 +197,14 @@ export const PartHistoryDialog = ({ partId, partName, open, onOpenChange, onUser
                   )}
                   <div className="border rounded-lg p-4 bg-card hover:bg-muted/50 transition-colors">
                     <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Calendar className="h-5 w-5 text-primary" />
+                      <div className="flex-shrink-0 flex items-center gap-3">
+                        <Checkbox
+                          checked={selectedEntries.includes(entry.id)}
+                          onCheckedChange={(checked) => handleCheckboxChange(entry.id, checked as boolean)}
+                        />
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Calendar className="h-5 w-5 text-primary" />
+                        </div>
                       </div>
                       <div className="flex-1 space-y-3">
                         <div className="flex items-center justify-between">
@@ -234,5 +297,12 @@ export const PartHistoryDialog = ({ partId, partName, open, onOpenChange, onUser
         </ScrollArea>
       </DialogContent>
     </Dialog>
+
+    <PartCompareDialog
+      entries={getSelectedEntries()}
+      open={compareDialogOpen}
+      onOpenChange={setCompareDialogOpen}
+    />
+    </>
   );
 };
