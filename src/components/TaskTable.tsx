@@ -213,7 +213,7 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
           <TableBody>
             {sortedParts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   Nincs megjeleníthető alkatrész
                 </TableCell>
               </TableRow>
@@ -240,6 +240,9 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
                         {part.profiles.full_name}
                       </div>
                     )}
+                  </TableCell>
+                  <TableCell className="min-w-[140px]">
+                    <div className="text-sm">{formatDate(part.updated_at)}</div>
                   </TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-2">

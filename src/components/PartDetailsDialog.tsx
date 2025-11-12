@@ -5,11 +5,12 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, User, Package, Factory, FileText, Download, FileIcon } from "lucide-react";
+import { Calendar, User, Package, Factory, FileText, Download, FileIcon, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { PartHistoryDialog } from "./PartHistoryDialog";
 
 interface PartFile {
   id: string;
@@ -50,6 +51,7 @@ interface PartDetailsDialogProps {
 export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: PartDetailsDialogProps) => {
   const [files, setFiles] = useState<PartFile[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -174,18 +176,32 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
   const filesByCategory = groupFilesByCategory();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">{part.name}</DialogTitle>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="font-mono">{part.part_number}</span>
-            <span>•</span>
-            <span>{part.department}</span>
-            <span>•</span>
-            {getStatusBadge(part.status)}
-          </div>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <DialogTitle className="text-2xl">{part.name}</DialogTitle>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="font-mono">{part.part_number}</span>
+                  <span>•</span>
+                  <span>{part.department}</span>
+                  <span>•</span>
+                  {getStatusBadge(part.status)}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsHistoryOpen(true)}
+                className="ml-4"
+              >
+                <History className="h-4 w-4 mr-2" />
+                Történet
+              </Button>
+            </div>
+          </DialogHeader>
 
         <div className="space-y-6">
           {part.description && (
@@ -363,5 +379,14 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
         </div>
       </DialogContent>
     </Dialog>
+    
+    <PartHistoryDialog
+      partId={part.id}
+      partName={part.name}
+      open={isHistoryOpen}
+      onOpenChange={setIsHistoryOpen}
+      onUserClick={onCreatorClick}
+    />
+  </>
   );
 };
