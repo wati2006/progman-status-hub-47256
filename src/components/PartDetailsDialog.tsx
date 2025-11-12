@@ -195,7 +195,7 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
                 variant="outline"
                 size="sm"
                 onClick={() => setIsHistoryOpen(true)}
-                className="ml-4"
+                className="ml-4 mr-8"
               >
                 <History className="h-4 w-4 mr-2" />
                 Történet
