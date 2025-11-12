@@ -71,6 +71,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [newFiles, setNewFiles] = useState<NewFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [focusedFileIndex, setFocusedFileIndex] = useState<number | null>(null);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -131,11 +132,23 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
     return 0;
   };
 
-  const incrementVersion = (version: string): string => {
-    if (version === "0.0.0") return "1.0.0";
-    const parts = version.split('.').map(Number);
-    parts[parts.length - 1] += 1;
-    return parts.join('.');
+  const getSuggestedVersions = (category: string): string[] => {
+    const highestVersion = getHighestVersion(category);
+    
+    // First file - suggest bugfix, minor, and major initial versions
+    if (highestVersion === "0.0.0") {
+      return ["0.0.1", "0.1.0", "1.0.0"];
+    }
+    
+    // Subsequent files - suggest next bugfix, minor, and major versions
+    const parts = highestVersion.split('.').map(Number);
+    const [major, minor, patch] = parts;
+    
+    return [
+      `${major}.${minor}.${patch + 1}`, // bugfix
+      `${major}.${minor + 1}.0`,        // minor
+      `${major + 1}.0.0`                // major
+    ];
   };
 
   const handleAddFile = (category: string) => {
@@ -225,12 +238,23 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
         return;
       }
       
-      const highestVersion = getHighestVersion(newFile.category);
-      const minVersion = incrementVersion(highestVersion);
-      if (compareVersions(newFile.version, highestVersion) <= 0) {
+      // Minimum version check (must be greater than 0.0.0, so minimum 0.0.1)
+      if (compareVersions(newFile.version, "0.0.0") <= 0) {
         toast({
           title: "Érvénytelen verzió",
-          description: `A verzió számnak nagyobbnak kell lennie, mint ${highestVersion} (minimum: ${minVersion})`,
+          description: "A verzió számnak nagyobbnak kell lennie, mint 0.0.0 (minimum: 0.0.1)",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Check against highest existing version
+      const highestVersion = getHighestVersion(newFile.category);
+      const suggestedVersions = getSuggestedVersions(newFile.category);
+      if (highestVersion !== "0.0.0" && compareVersions(newFile.version, highestVersion) <= 0) {
+        toast({
+          title: "Érvénytelen verzió",
+          description: `A verzió számnak nagyobbnak kell lennie, mint ${highestVersion} (javaslat: ${suggestedVersions[0]})`,
           variant: "destructive"
         });
         return;
@@ -383,24 +407,49 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
 
             {categoryNewFiles.map((newFile, index) => {
               const globalIndex = newFiles.findIndex(f => f === newFile);
+              const suggestedVersions = getSuggestedVersions(category);
               return (
                 <div key={globalIndex} className="flex items-center gap-2 p-3 border rounded-md bg-primary/5">
                   <Upload className="h-4 w-4 text-primary" />
                   <div className="flex-1 space-y-2">
                     <p className="text-sm font-medium">{newFile.file.name}</p>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs">Verzió:</Label>
-                      <Input
-                        type="text"
-                        value={newFile.version}
-                        onChange={(e) => handleVersionChange(globalIndex, e.target.value)}
-                        placeholder={incrementVersion(getHighestVersion(category))}
-                        className="h-7 text-xs w-24"
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        (min: {incrementVersion(getHighestVersion(category))})
-                      </span>
+                    <div className="relative">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs">Verzió:</Label>
+                        <div className="relative">
+                          <Input
+                            type="text"
+                            value={newFile.version}
+                            onChange={(e) => handleVersionChange(globalIndex, e.target.value)}
+                            onFocus={() => setFocusedFileIndex(globalIndex)}
+                            onBlur={() => setTimeout(() => setFocusedFileIndex(null), 200)}
+                            placeholder={suggestedVersions[0]}
+                            className="h-7 text-xs w-24"
+                            disabled={isSubmitting}
+                          />
+                          {focusedFileIndex === globalIndex && (
+                            <div className="absolute top-full left-0 mt-1 flex gap-1 z-10">
+                              {suggestedVersions.map((version, vIdx) => (
+                                <button
+                                  key={version}
+                                  type="button"
+                                  onClick={() => {
+                                    handleVersionChange(globalIndex, version);
+                                    setFocusedFileIndex(null);
+                                  }}
+                                  className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 shadow-md whitespace-nowrap"
+                                  title={vIdx === 0 ? "Bugfix" : vIdx === 1 ? "Minor" : "Major"}
+                                >
+                                  {version}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          (min: {suggestedVersions[0]})
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <Button
