@@ -7,6 +7,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, User as UserIcon, Mail, Users as UsersIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MemberProfileDialog } from "@/components/MemberProfileDialog";
+import { PartDetailsDialog } from "@/components/PartDetailsDialog";
 import type { User } from "@supabase/supabase-js";
 
 interface Profile {
@@ -23,6 +25,11 @@ const Members = () => {
   const [user, setUser] = useState<User | null>(null);
   const [members, setMembers] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
+  const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
+  const [isPartDialogOpen, setIsPartDialogOpen] = useState(false);
+  const [selectedPart, setSelectedPart] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -87,6 +94,31 @@ const Members = () => {
     return "secondary";
   };
 
+  const handleMemberClick = (memberId: string) => {
+    setSelectedMemberId(memberId);
+    setIsMemberDialogOpen(true);
+  };
+
+  const handlePartClick = async (partId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("parts")
+        .select("*, profiles!parts_created_by_fkey(full_name)")
+        .eq("id", partId)
+        .single();
+
+      if (error) throw error;
+      setSelectedPart(data);
+      setIsPartDialogOpen(true);
+    } catch (error: any) {
+      toast({
+        title: "Hiba történt",
+        description: error.message || "Nem sikerült betölteni az alkatrészt.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -118,7 +150,11 @@ const Members = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {members.map((member) => (
-            <Card key={member.id}>
+            <Card 
+              key={member.id}
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => handleMemberClick(member.id)}
+            >
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <Avatar className="h-16 w-16">
@@ -172,6 +208,24 @@ const Members = () => {
           </div>
         )}
       </main>
+
+      <MemberProfileDialog
+        userId={selectedMemberId}
+        open={isMemberDialogOpen}
+        onOpenChange={setIsMemberDialogOpen}
+        onPartClick={handlePartClick}
+      />
+
+      <PartDetailsDialog
+        part={selectedPart}
+        open={isPartDialogOpen}
+        onOpenChange={setIsPartDialogOpen}
+        onCreatorClick={(userId) => {
+          setIsMemberDialogOpen(false);
+          setSelectedMemberId(userId);
+          setIsMemberDialogOpen(true);
+        }}
+      />
     </div>
   );
 };

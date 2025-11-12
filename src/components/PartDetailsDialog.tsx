@@ -43,9 +43,10 @@ interface PartDetailsDialogProps {
   part: Part | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreatorClick?: (userId: string) => void;
 }
 
-export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialogProps) => {
+export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: PartDetailsDialogProps) => {
   const [files, setFiles] = useState<PartFile[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const { toast } = useToast();
@@ -336,10 +337,21 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
               <Calendar className="h-4 w-4" />
               <span>Létrehozva: {formatDate(part.created_at)}</span>
             </div>
-            {part.profiles?.full_name && (
+            {part.profiles?.full_name && part.created_by && (
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                <span>Feltöltő: {part.profiles.full_name}</span>
+                <span>Feltöltő: </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (part.created_by) {
+                      onCreatorClick?.(part.created_by);
+                    }
+                  }}
+                  className="text-primary hover:underline cursor-pointer"
+                >
+                  {part.profiles.full_name}
+                </button>
               </div>
             )}
           </div>

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { PartDetailsDialog } from "./PartDetailsDialog";
+import { MemberProfileDialog } from "./MemberProfileDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,6 +68,8 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedPart, setSelectedPart] = useState<Part | null>(null);
   const [partToDelete, setPartToDelete] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -139,6 +142,26 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
       });
     } finally {
       setPartToDelete(null);
+    }
+  };
+
+  const handleCreatorClick = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsMemberDialogOpen(true);
+  };
+
+  const handlePartClickFromMemberDialog = async (partId: string) => {
+    try {
+      const part = parts.find(p => p.id === partId);
+      if (part) {
+        setSelectedPart(part);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Hiba történt",
+        description: error.message || "Nem sikerült betölteni az alkatrészt.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -235,7 +258,15 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
       <PartDetailsDialog 
         part={selectedPart} 
         open={!!selectedPart} 
-        onOpenChange={(open) => !open && setSelectedPart(null)} 
+        onOpenChange={(open) => !open && setSelectedPart(null)}
+        onCreatorClick={handleCreatorClick}
+      />
+
+      <MemberProfileDialog
+        userId={selectedUserId}
+        open={isMemberDialogOpen}
+        onOpenChange={setIsMemberDialogOpen}
+        onPartClick={handlePartClickFromMemberDialog}
       />
 
       <AlertDialog open={!!partToDelete} onOpenChange={(open) => !open && setPartToDelete(null)}>
