@@ -58,6 +58,7 @@ interface NewFile {
 
 export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [department, setDepartment] = useState(part?.department || "");
+  const [originalDepartment] = useState(part?.department || "");
   const [partNumber, setPartNumber] = useState(part?.part_number || "");
   const [name, setName] = useState(part?.name || "");
   const [description, setDescription] = useState(part?.description || "");
@@ -87,23 +88,37 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
 
   // Generate new part number when department changes in edit mode
   useEffect(() => {
-    if (part && department && department !== part.department) {
+    if (part && department && department !== originalDepartment) {
+      console.log('Department changed, generating new part number:', department);
       generateNewPartNumber();
     }
-  }, [department, part]);
+  }, [department]);
 
   const generateNewPartNumber = async () => {
+    if (!department) return;
+    
     try {
+      console.log('Calling generate_part_number RPC with department:', department);
       const { data, error } = await supabase.rpc('generate_part_number', {
         dept: department
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error from RPC:', error);
+        throw error;
+      }
+      
       if (data) {
+        console.log('New part number generated:', data);
         setPartNumber(data);
       }
     } catch (error) {
       console.error('Error generating part number:', error);
+      toast({
+        title: "Hiba",
+        description: "Hiba történt a rajzszám generálásakor.",
+        variant: "destructive"
+      });
     }
   };
 
