@@ -394,7 +394,7 @@ const Profile = () => {
                   type="text"
                   value={discordProfile}
                   onChange={(e) => setDiscordProfile(e.target.value)}
-                  placeholder="username#1234"
+                  placeholder="@username"
                 />
                 <p className="text-xs text-muted-foreground">
                   Opcionális

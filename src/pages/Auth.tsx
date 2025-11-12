@@ -178,7 +178,7 @@ const Auth = () => {
                   <Input
                     id="signup-discord"
                     type="text"
-                    placeholder="username#1234"
+                    placeholder="@username"
                     value={discordProfile}
                     onChange={(e) => setDiscordProfile(e.target.value)}
                   />
