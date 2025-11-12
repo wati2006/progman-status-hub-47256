@@ -58,7 +58,6 @@ interface NewFile {
 
 export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [department, setDepartment] = useState(part?.department || "");
-  const [originalDepartment] = useState(part?.department || "");
   const [partNumber, setPartNumber] = useState(part?.part_number || "");
   const [name, setName] = useState(part?.name || "");
   const [description, setDescription] = useState(part?.description || "");
@@ -88,7 +87,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
 
   // Generate new part number when department changes in edit mode
   useEffect(() => {
-    if (part && department && department !== originalDepartment) {
+    if (part && department) {
       console.log('Department changed, generating new part number:', department);
       generateNewPartNumber();
     }
