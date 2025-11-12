@@ -232,6 +232,8 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   };
 
   const handleSaveVersion = async (fileId: string) => {
+    console.log('handleSaveVersion called', { fileId, editVersion });
+    
     if (!editVersion.trim()) {
       toast({
         title: "Hiányzó verzió",
@@ -242,6 +244,7 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
     }
 
     const file = existingFiles.find(f => f.id === fileId);
+    console.log('Found file:', file);
     if (!file) return;
 
     // Check if version is greater than 0.0.0
@@ -298,16 +301,23 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
     }
 
     try {
+      console.log('Updating database with version:', editVersion);
       const { error } = await supabase
         .from('part_files')
         .update({ version: editVersion })
         .eq('id', fileId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Database update error:', error);
+        throw error;
+      }
       
-      setExistingFiles(prev => 
-        prev.map(f => f.id === fileId ? { ...f, version: editVersion } : f)
-      );
+      console.log('Database updated successfully, updating state');
+      setExistingFiles(prev => {
+        const updated = prev.map(f => f.id === fileId ? { ...f, version: editVersion } : f);
+        console.log('Updated existingFiles:', updated);
+        return updated;
+      });
       
       setEditingFileId(null);
       setEditVersion("");
