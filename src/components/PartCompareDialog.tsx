@@ -36,6 +36,16 @@ export const PartCompareDialog = ({ entries, open, onOpenChange }: PartCompareDi
 
   const [older, newer] = entries[0].changed_at < entries[1].changed_at ? entries : [entries[1], entries[0]];
 
+  const statusLabels: Record<HistoryEntry["status"], string> = {
+    terv: "Terv",
+    gyartas_alatt: "Gyártás alatt",
+    kesz: "Kész",
+    jovahagyasra_var: "Jóváhagyásra vár",
+    elutasitva: "Elutasítva"
+  };
+
+  const getStatusLabel = (status: HistoryEntry["status"]) => statusLabels[status];
+
   const getStatusBadge = (status: HistoryEntry["status"]) => {
     const config: Record<HistoryEntry["status"], { variant: "default" | "secondary" | "destructive"; label: string; className?: string }> = {
       terv: { variant: "secondary", label: "Terv" },
@@ -125,8 +135,8 @@ export const PartCompareDialog = ({ entries, open, onOpenChange }: PartCompareDi
             <div className="space-y-3">
               <CompareField 
                 label="Státusz" 
-                oldValue={older.status} 
-                newValue={newer.status} 
+                oldValue={getStatusLabel(older.status)} 
+                newValue={getStatusLabel(newer.status)} 
               />
               
               <CompareField 
