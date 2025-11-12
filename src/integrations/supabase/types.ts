@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      part_files: {
+        Row: {
+          category: string
+          created_at: string
+          file_url: string
+          id: string
+          part_id: string
+          uploaded_by: string | null
+          version: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          file_url: string
+          id?: string
+          part_id: string
+          uploaded_by?: string | null
+          version: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_url?: string
+          id?: string
+          part_id?: string
+          uploaded_by?: string | null
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "part_files_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parts: {
         Row: {
           approver: string | null

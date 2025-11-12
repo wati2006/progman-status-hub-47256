@@ -1,9 +1,19 @@
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Calendar, User, Package, Factory, FileText, Download, FileIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
+interface PartFile {
+  id: string;
+  category: string;
+  file_url: string;
+  version: string;
+  created_at: string;
+}
 
 interface Part {
   id: string;
@@ -20,9 +30,6 @@ interface Part {
   status: "terv" | "gyartas_alatt" | "kesz" | "jovahagyasra_var" | "elutasitva";
   created_at: string;
   created_by: string | null;
-  cad_model_url: string | null;
-  technical_drawing_url: string | null;
-  documentation_url: string | null;
   profiles: {
     full_name: string | null;
   } | null;
@@ -35,6 +42,35 @@ interface PartDetailsDialogProps {
 }
 
 export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialogProps) => {
+  const [files, setFiles] = useState<PartFile[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+
+  useEffect(() => {
+    if (part?.id && open) {
+      loadFiles();
+    }
+  }, [part?.id, open]);
+
+  const loadFiles = async () => {
+    if (!part?.id) return;
+    
+    setIsLoadingFiles(true);
+    try {
+      const { data, error } = await supabase
+        .from('part_files')
+        .select('*')
+        .eq('part_id', part.id)
+        .order('version', { ascending: false });
+      
+      if (error) throw error;
+      setFiles(data || []);
+    } catch (error) {
+      console.error('Error loading files:', error);
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  };
+
   if (!part) return null;
 
   const getStatusBadge = (status: Part["status"]) => {
@@ -80,6 +116,33 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
       console.error('Error downloading file:', error);
     }
   };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'cad_model': return 'CAD modellek';
+      case 'technical_drawing': return 'Műszaki rajzok';
+      case 'documentation': return 'Dokumentációk';
+      default: return category;
+    }
+  };
+
+  const groupFilesByCategory = () => {
+    const grouped: Record<string, PartFile[]> = {
+      cad_model: [],
+      technical_drawing: [],
+      documentation: []
+    };
+    
+    files.forEach(file => {
+      if (grouped[file.category]) {
+        grouped[file.category].push(file);
+      }
+    });
+    
+    return grouped;
+  };
+
+  const filesByCategory = groupFilesByCategory();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -159,56 +222,58 @@ export const PartDetailsDialog = ({ part, open, onOpenChange }: PartDetailsDialo
 
           <Separator />
 
-          {(part.cad_model_url || part.technical_drawing_url || part.documentation_url) && (
-            <>
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <FileIcon className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold">Fájlok</h3>
-                </div>
-                <div className="space-y-2">
-                  {part.cad_model_url && (
-                    <div className="flex items-center justify-between p-2 border rounded-md">
-                      <span className="text-sm">CAD modell</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => downloadFile(part.cad_model_url!, 'cad_model')}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                  {part.technical_drawing_url && (
-                    <div className="flex items-center justify-between p-2 border rounded-md">
-                      <span className="text-sm">Műszaki rajz</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => downloadFile(part.technical_drawing_url!, 'technical_drawing.pdf')}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                  {part.documentation_url && (
-                    <div className="flex items-center justify-between p-2 border rounded-md">
-                      <span className="text-sm">Dokumentáció</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => downloadFile(part.documentation_url!, 'documentation.pdf')}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <FileIcon className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-semibold">Fájlok és verziók</h3>
+            </div>
+            
+            {isLoadingFiles ? (
+              <p className="text-sm text-muted-foreground">Betöltés...</p>
+            ) : files.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nincsenek feltöltött fájlok</p>
+            ) : (
+              <Accordion type="single" collapsible className="w-full">
+                {Object.entries(filesByCategory).map(([category, categoryFiles]) => {
+                  if (categoryFiles.length === 0) return null;
+                  
+                  return (
+                    <AccordionItem key={category} value={category}>
+                      <AccordionTrigger className="text-sm font-semibold">
+                        {getCategoryLabel(category)} ({categoryFiles.length})
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-2">
+                          {categoryFiles.map((file) => (
+                            <div 
+                              key={file.id} 
+                              className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">Verzió: {file.version}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Feltöltve: {formatDate(file.created_at)}
+                                </p>
+                              </div>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            )}
+          </div>
 
-              <Separator />
-            </>
-          )}
+          <Separator />
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
