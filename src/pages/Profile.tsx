@@ -297,7 +297,24 @@ const Profile = () => {
                     <Input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+                          if (file.size > maxSize) {
+                            toast({
+                              title: "Túl nagy fájl",
+                              description: "A profilkép maximum 2MB lehet.",
+                              variant: "destructive"
+                            });
+                            e.target.value = ""; // Reset input
+                            return;
+                          }
+                          setAvatarFile(file);
+                        } else {
+                          setAvatarFile(null);
+                        }
+                      }}
                       disabled={isSaving}
                     />
                     <p className="text-xs text-muted-foreground">
