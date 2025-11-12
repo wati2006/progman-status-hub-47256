@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Loader2, Plus, Upload, Edit2, Check, X } from "lucide-react";
+import { Trash2, Loader2, Plus, Upload } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface PartFile {
@@ -74,8 +74,6 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [focusedFileIndex, setFocusedFileIndex] = useState<number | null>(null);
   const [fileToDelete, setFileToDelete] = useState<{ id: string; url: string } | null>(null);
-  const [editingFileId, setEditingFileId] = useState<string | null>(null);
-  const [editVersion, setEditVersion] = useState("");
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -228,116 +226,6 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
       });
     } finally {
       setFileToDelete(null);
-    }
-  };
-
-  const handleSaveVersion = async (fileId: string) => {
-    // Validation: version cannot be empty
-    if (!editVersion.trim()) {
-      toast({
-        title: "Hiányzó verzió",
-        description: "A verzió szám nem lehet üres!",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Find the file being edited
-    const currentFile = existingFiles.find(f => f.id === fileId);
-    if (!currentFile) {
-      toast({
-        title: "Hiba",
-        description: "A fájl nem található!",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validation: version must be > 0.0.0
-    if (compareVersions(editVersion, "0.0.0") <= 0) {
-      toast({
-        title: "Érvénytelen verzió",
-        description: "A verzió számnak nagyobbnak kell lennie, mint 0.0.0 (minimum: 0.0.1)",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Get all files in the same category, sorted by version (ascending)
-    const filesInCategory = existingFiles
-      .filter(f => f.category === currentFile.category)
-      .sort((a, b) => compareVersions(a.version, b.version));
-    
-    // Find current file position
-    const currentPosition = filesInCategory.findIndex(f => f.id === fileId);
-    
-    // Check constraints with previous version
-    if (currentPosition > 0) {
-      const previousVersion = filesInCategory[currentPosition - 1].version;
-      if (compareVersions(editVersion, previousVersion) <= 0) {
-        toast({
-          title: "Érvénytelen verzió",
-          description: `A verzió számnak nagyobbnak kell lennie, mint ${previousVersion}`,
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-    
-    // Check constraints with next version
-    if (currentPosition < filesInCategory.length - 1) {
-      const nextVersion = filesInCategory[currentPosition + 1].version;
-      if (compareVersions(editVersion, nextVersion) >= 0) {
-        toast({
-          title: "Érvénytelen verzió",
-          description: `A verzió számnak kisebbnek kell lennie, mint ${nextVersion}`,
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-
-    // Check if version already exists (excluding current file)
-    const isDuplicate = filesInCategory.some(
-      f => f.id !== fileId && f.version === editVersion
-    );
-    
-    if (isDuplicate) {
-      toast({
-        title: "Érvénytelen verzió",
-        description: "Ez a verzió szám már létezik ebben a kategóriában!",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Update database
-    try {
-      const { error } = await supabase
-        .from('part_files')
-        .update({ version: editVersion })
-        .eq('id', fileId);
-      
-      if (error) throw error;
-      
-      // Update local state
-      await loadExistingFiles();
-      
-      // Reset editing state
-      setEditingFileId(null);
-      setEditVersion("");
-      
-      toast({
-        title: "Verzió frissítve",
-        description: "A verzió szám sikeresen módosítva lett."
-      });
-    } catch (error) {
-      console.error('Error updating version:', error);
-      toast({
-        title: "Hiba",
-        description: "Hiba történt a verzió frissítésekor.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -512,81 +400,26 @@ export const TaskForm = ({ part, onClose }: TaskFormProps) => {
           <>
             {categoryFiles.map((file) => {
               const isLatest = isLatestVersion(file);
-              const isEditing = editingFileId === file.id;
               
               return (
                 <div key={file.id} className="flex items-center gap-2 p-3 border rounded-md bg-background">
                   <div className="flex-1">
-                    {isEditing ? (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs">Verzió:</Label>
-                        <Input
-                          type="text"
-                          value={editVersion}
-                          onChange={(e) => setEditVersion(e.target.value)}
-                          className="h-7 text-xs w-24"
-                          placeholder={file.version}
-                          autoFocus
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSaveVersion(file.id)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <Check className="h-4 w-4 text-green-600" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingFileId(null);
-                            setEditVersion("");
-                          }}
-                          className="h-7 w-7 p-0"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-sm font-medium">Verzió: {file.version}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(file.created_at).toLocaleDateString('hu-HU')}
-                        </p>
-                      </>
-                    )}
+                    <p className="text-sm font-medium">Verzió: {file.version}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(file.created_at).toLocaleDateString('hu-HU')}
+                    </p>
                   </div>
-                  {!isEditing && (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingFileId(file.id);
-                          setEditVersion(file.version);
-                        }}
-                        disabled={isSubmitting}
-                        title="Verzió szerkesztése"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setFileToDelete({ id: file.id, url: file.file_url })}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        disabled={isSubmitting || !isLatest}
-                        title={isLatest ? "Fájl törlése" : "Csak a legutóbbi verzió törölhető"}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFileToDelete({ id: file.id, url: file.file_url })}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={isSubmitting || !isLatest}
+                    title={isLatest ? "Fájl törlése" : "Csak a legutóbbi verzió törölhető"}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               );
             })}
