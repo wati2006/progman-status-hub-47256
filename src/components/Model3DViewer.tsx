@@ -184,7 +184,7 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[80vh]">
         <DialogHeader>
-          <DialogTitle>3D Model Preview - {fileName}</DialogTitle>
+          <DialogTitle>3D Modell Előnézet - {fileName}</DialogTitle>
         </DialogHeader>
         
         <div className="flex justify-end -mt-2 mb-2">
