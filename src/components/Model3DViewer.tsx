@@ -24,10 +24,10 @@ function Model({ url }: { url: string }) {
       try {
         console.log("Starting STEP file load from URL:", url);
         
-        // Dynamic import to handle CommonJS module
-        const occtimportjs = await import("occt-import-js");
-        const occtInit = occtimportjs.default || occtimportjs;
-        const occt = await occtInit();
+        // Dynamic import - occt-import-js is a function that returns a promise
+        const { default: occtimportjs } = await import("occt-import-js");
+        console.log("OCCT module imported, initializing...");
+        const occt = await occtimportjs();
         console.log("OCCT library loaded successfully");
         
         const response = await fetch(url);
