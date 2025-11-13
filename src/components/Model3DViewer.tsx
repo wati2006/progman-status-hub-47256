@@ -24,10 +24,20 @@ function Model({ url }: { url: string }) {
       try {
         console.log("Starting STEP file load from URL:", url);
         
-        // Dynamic import - occt-import-js is a function that returns a promise
-        const { default: occtimportjs } = await import("occt-import-js");
-        console.log("OCCT module imported, initializing...");
-        const occt = await occtimportjs();
+        // Load occt-import-js dynamically as a script since ESM import doesn't work
+        if (!(window as any).occtimportjs) {
+          console.log("Loading OCCT library from CDN...");
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/dist/occt-import-js.js';
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load OCCT library'));
+            document.head.appendChild(script);
+          });
+        }
+        
+        console.log("Initializing OCCT...");
+        const occt = await (window as any).occtimportjs();
         console.log("OCCT library loaded successfully");
         
         const response = await fetch(url);
