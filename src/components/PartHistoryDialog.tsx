@@ -163,25 +163,23 @@ export const PartHistoryDialog = ({ partId, partName, open, onOpenChange, onUser
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh]">
           <DialogHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <DialogTitle className="text-2xl">Szerkesztési történet</DialogTitle>
-                {partName && (
-                  <p className="text-sm text-muted-foreground">{partName}</p>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCompare}
-                disabled={selectedEntries.length !== 2}
-                className="ml-4"
-              >
-                <GitCompare className="h-4 w-4 mr-2" />
-                Összehasonlít ({selectedEntries.length}/2)
-              </Button>
-            </div>
+            <DialogTitle className="text-2xl">Szerkesztési történet</DialogTitle>
+            {partName && (
+              <p className="text-sm text-muted-foreground">{partName}</p>
+            )}
           </DialogHeader>
+          
+          <div className="flex justify-end -mt-2 mb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCompare}
+              disabled={selectedEntries.length !== 2}
+            >
+              <GitCompare className="h-4 w-4 mr-2" />
+              Összehasonlít ({selectedEntries.length}/2)
+            </Button>
+          </div>
 
         <ScrollArea className="h-[60vh] pr-4">
           {isLoading ? (
