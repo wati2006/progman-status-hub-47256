@@ -184,18 +184,19 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[80vh]">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>3D Model Preview - {fileName}</span>
+          <div className="flex items-center justify-between gap-8">
+            <DialogTitle>3D Model Preview - {fileName}</DialogTitle>
             <Button
               variant="outline"
               size="sm"
               onClick={handleDownload}
               disabled={!signedUrl}
+              className="shrink-0"
             >
               <Download className="h-4 w-4 mr-2" />
               Letöltés
             </Button>
-          </DialogTitle>
+          </div>
         </DialogHeader>
 
         <div className="flex-1 relative bg-muted/30 rounded-lg overflow-hidden">
