@@ -18,5 +18,8 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     exclude: ['occt-import-js']
   },
-  assetsInclude: ['**/*.wasm']
+  assetsInclude: ['**/*.wasm'],
+  worker: {
+    format: 'es'
+  }
 }));

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import occtimportjs from "occt-import-js";
 import * as THREE from "three";
 
 interface Model3DViewerProps {
@@ -25,7 +24,10 @@ function Model({ url }: { url: string }) {
       try {
         console.log("Starting STEP file load from URL:", url);
         
-        const occt = await occtimportjs();
+        // Dynamic import to handle CommonJS module
+        const occtimportjs = await import("occt-import-js");
+        const occtInit = occtimportjs.default || occtimportjs;
+        const occt = await occtInit();
         console.log("OCCT library loaded successfully");
         
         const response = await fetch(url);
