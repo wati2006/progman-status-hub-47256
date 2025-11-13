@@ -23,20 +23,39 @@ function Model({ url }: { url: string }) {
   useEffect(() => {
     const loadStepFile = async () => {
       try {
+        console.log("Starting STEP file load from URL:", url);
+        
         const occt = await occtimportjs();
+        console.log("OCCT library loaded successfully");
+        
         const response = await fetch(url);
+        console.log("Fetch response status:", response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const buffer = await response.arrayBuffer();
+        console.log("File buffer loaded, size:", buffer.byteLength);
+        
         const fileBuffer = new Uint8Array(buffer);
 
         const result = occt.ReadStepFile(fileBuffer, null);
+        console.log("STEP file parse result:", result.success, "meshes:", result.meshes?.length);
         
         if (!result.success) {
-          throw new Error("Failed to parse STEP file");
+          throw new Error("Failed to parse STEP file - file may be corrupted or invalid");
+        }
+
+        if (!result.meshes || result.meshes.length === 0) {
+          throw new Error("No geometry found in STEP file");
         }
 
         const group = new THREE.Group();
         
-        result.meshes.forEach((mesh: any) => {
+        result.meshes.forEach((mesh: any, index: number) => {
+          console.log(`Processing mesh ${index + 1}/${result.meshes.length}`);
+          
           const geometry = new THREE.BufferGeometry();
           
           const vertices = new Float32Array(mesh.attributes.position.array);
@@ -62,10 +81,12 @@ function Model({ url }: { url: string }) {
           group.add(meshObj);
         });
 
+        console.log("STEP model loaded successfully with", group.children.length, "meshes");
         setGeometry(group);
       } catch (err) {
         console.error("Error loading STEP file:", err);
-        setError("Nem sikerült betölteni a STEP modellt");
+        const errorMessage = err instanceof Error ? err.message : "Ismeretlen hiba";
+        setError(`Nem sikerült betölteni a STEP modellt: ${errorMessage}`);
       }
     };
 
