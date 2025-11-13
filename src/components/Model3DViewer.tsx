@@ -23,38 +23,38 @@ function Model({ url }: { url: string }) {
     const loadStepFile = async () => {
       try {
         console.log("Starting STEP file load from URL:", url);
-        
+
         // Load occt-import-js dynamically as a script since ESM import doesn't work
         if (!(window as any).occtimportjs) {
           console.log("Loading OCCT library from CDN...");
           await new Promise<void>((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/dist/occt-import-js.js';
+            const script = document.createElement("script");
+            script.src = "https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/dist/occt-import-js.js";
             script.onload = () => resolve();
-            script.onerror = () => reject(new Error('Failed to load OCCT library'));
+            script.onerror = () => reject(new Error("Failed to load OCCT library"));
             document.head.appendChild(script);
           });
         }
-        
+
         console.log("Initializing OCCT...");
         const occt = await (window as any).occtimportjs();
         console.log("OCCT library loaded successfully");
-        
+
         const response = await fetch(url);
         console.log("Fetch response status:", response.status);
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const buffer = await response.arrayBuffer();
         console.log("File buffer loaded, size:", buffer.byteLength);
-        
+
         const fileBuffer = new Uint8Array(buffer);
 
         const result = occt.ReadStepFile(fileBuffer, null);
         console.log("STEP file parse result:", result.success, "meshes:", result.meshes?.length);
-        
+
         if (!result.success) {
           throw new Error("Failed to parse STEP file - file may be corrupted or invalid");
         }
@@ -64,31 +64,31 @@ function Model({ url }: { url: string }) {
         }
 
         const group = new THREE.Group();
-        
+
         result.meshes.forEach((mesh: any, index: number) => {
           console.log(`Processing mesh ${index + 1}/${result.meshes.length}`);
-          
+
           const geometry = new THREE.BufferGeometry();
-          
+
           const vertices = new Float32Array(mesh.attributes.position.array);
-          geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-          
+          geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+
           if (mesh.attributes.normal) {
             const normals = new Float32Array(mesh.attributes.normal.array);
-            geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+            geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
           }
-          
+
           if (mesh.index) {
             const indices = new Uint32Array(mesh.index.array);
             geometry.setIndex(new THREE.BufferAttribute(indices, 1));
           }
-          
+
           const material = new THREE.MeshStandardMaterial({
             color: mesh.color || 0x808080,
             metalness: 0.3,
             roughness: 0.7,
           });
-          
+
           const meshObj = new THREE.Mesh(geometry, material);
           group.add(meshObj);
         });
@@ -137,24 +137,22 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
 
   const loadModel = async () => {
     if (!fileUrl || signedUrl) return;
-    
+
     setLoading(true);
     try {
       // Extract the path from the full URL
-      const urlParts = fileUrl.split('/storage/v1/object/public/part-files/');
+      const urlParts = fileUrl.split("/storage/v1/object/public/part-files/");
       const filePath = urlParts[1] || fileUrl;
 
-      const { data, error } = await supabase.storage
-        .from('part-files')
-        .createSignedUrl(filePath, 3600); // 1 hour expiry
+      const { data, error } = await supabase.storage.from("part-files").createSignedUrl(filePath, 3600); // 1 hour expiry
 
       if (error) throw error;
-      
+
       setSignedUrl(data.signedUrl);
     } catch (error) {
-      console.error('Error loading model:', error);
+      console.error("Error loading model:", error);
       toast.error("Hiba", {
-        description: "Nem sikerült betölteni a 3D modellt"
+        description: "Nem sikerült betölteni a 3D modellt",
       });
     } finally {
       setLoading(false);
@@ -163,7 +161,7 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
 
   const handleDownload = () => {
     if (signedUrl) {
-      window.open(signedUrl, '_blank');
+      window.open(signedUrl, "_blank");
     }
   };
 
@@ -175,25 +173,20 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
   }, [open]);
 
   // Extract file extension from the actual file URL, not the display name
-  const urlParts = fileUrl.split('/');
+  const urlParts = fileUrl.split("/");
   const actualFileName = urlParts[urlParts.length - 1];
-  const fileExtension = actualFileName.toLowerCase().split('.').pop();
-  const isSupportedFormat = ['step', 'stp'].includes(fileExtension || '');
+  const fileExtension = actualFileName.toLowerCase().split(".").pop();
+  const isSupportedFormat = ["step", "stp"].includes(fileExtension || "");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[80vh]">
         <DialogHeader>
-          <DialogTitle>3D Modell Előnézet - {fileName}</DialogTitle>
+          <DialogTitle>3D modell előnézet - {fileName}</DialogTitle>
         </DialogHeader>
-        
+
         <div className="flex justify-end -mt-2 mb-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            disabled={!signedUrl}
-          >
+          <Button variant="outline" size="sm" onClick={handleDownload} disabled={!signedUrl}>
             <Download className="h-4 w-4 mr-2" />
             Letöltés
           </Button>
@@ -203,12 +196,8 @@ export const Model3DViewer = ({ fileUrl, fileName, open, onOpenChange }: Model3D
           {!isSupportedFormat ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center space-y-4">
-                <p className="text-muted-foreground">
-                  A 3D előnézet csak STEP formátumot támogat (.step, .stp)
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Jelenlegi fájl: .{fileExtension}
-                </p>
+                <p className="text-muted-foreground">A 3D előnézet csak STEP formátumot támogat (.step, .stp)</p>
+                <p className="text-sm text-muted-foreground">Jelenlegi fájl: .{fileExtension}</p>
                 <Button onClick={handleDownload} disabled={!signedUrl}>
                   <Download className="h-4 w-4 mr-2" />
                   Fájl letöltése
