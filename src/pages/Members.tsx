@@ -129,16 +129,16 @@ const Members = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
               <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Csapattagok</h1>
-                <p className="text-sm text-muted-foreground">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">Csapattagok</h1>
+                <p className="text-xs md:text-sm text-muted-foreground">
                   {members.length} regisztrált tag
                 </p>
               </div>
@@ -147,8 +147,8 @@ const Members = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <main className="container mx-auto px-4 py-4 md:py-8">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {members.map((member) => (
             <Card 
               key={member.id}
@@ -157,20 +157,20 @@ const Members = () => {
             >
               <CardHeader>
                 <div className="flex items-start gap-4">
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-12 w-12 md:h-16 md:w-16">
                     <AvatarImage 
                       src={member.avatar_url ? getAvatarUrl(member.avatar_url) || undefined : undefined} 
                     />
                     <AvatarFallback className="bg-primary/10">
-                      <UserIcon className="h-8 w-8 text-primary" />
+                      <UserIcon className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg truncate">
+                    <CardTitle className="text-base md:text-lg truncate">
                       {member.full_name || "Névtelen"}
                     </CardTitle>
                     {member.department && (
-                      <Badge variant={getDepartmentBadgeVariant(member.department)} className="mt-2">
+                      <Badge variant={getDepartmentBadgeVariant(member.department)} className="mt-2 text-xs">
                         {member.department}
                       </Badge>
                     )}
@@ -179,14 +179,14 @@ const Members = () => {
               </CardHeader>
               <CardContent className="space-y-2">
                 {member.email && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="h-4 w-4" />
+                  <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                    <Mail className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                     <span className="truncate">{member.email}</span>
                   </div>
                 )}
                 {member.discord_profile && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <UsersIcon className="h-4 w-4" />
+                  <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                    <UsersIcon className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                     <span className="truncate">{member.discord_profile}</span>
                   </div>
                 )}
