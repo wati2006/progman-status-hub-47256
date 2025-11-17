@@ -5,12 +5,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Plus, User as UserIcon, Users } from "lucide-react";
+import { LogOut, Plus, User as UserIcon, Users, Menu } from "lucide-react";
 import { TaskTable } from "@/components/TaskTable";
 import { TaskForm } from "@/components/TaskForm";
 import { TaskFilters } from "@/components/TaskFilters";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { User } from "@supabase/supabase-js";
 
 interface Part {
@@ -54,8 +56,10 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   useEffect(() => {
     const checkAuth = async () => {
       const {
@@ -169,56 +173,132 @@ const Dashboard = () => {
       </div>;
   }
   return <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Alkatrészkatalógus</h1>
-              <p className="text-sm text-muted-foreground">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">Alkatrészkatalógus</h1>
+              <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">
                 Formula Student alkatrészek nyilvántartása
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={userProfile?.avatar_url ? getAvatarUrl(userProfile.avatar_url) || undefined : undefined} />
-                  <AvatarFallback className="bg-primary/10">
-                    <UserIcon className="h-4 w-4 text-primary" />
-                  </AvatarFallback>
-                </Avatar>
-                {(userProfile?.full_name || user?.user_metadata?.full_name) && (
-                  <span className="text-sm text-foreground font-medium">
-                    {userProfile?.full_name || user?.user_metadata?.full_name}
-                  </span>
-                )}
+            
+            {/* Desktop Navigation */}
+            {!isMobile && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={userProfile?.avatar_url ? getAvatarUrl(userProfile.avatar_url) || undefined : undefined} />
+                    <AvatarFallback className="bg-primary/10">
+                      <UserIcon className="h-4 w-4 text-primary" />
+                    </AvatarFallback>
+                  </Avatar>
+                  {(userProfile?.full_name || user?.user_metadata?.full_name) && (
+                    <span className="text-sm text-foreground font-medium">
+                      {userProfile?.full_name || user?.user_metadata?.full_name}
+                    </span>
+                  )}
+                </div>
+                <ThemeToggle />
+                <Button variant="outline" onClick={() => navigate("/members")}>
+                  <Users className="mr-2 h-4 w-4" />
+                  Csapattagok
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/profile")}>
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  Profil
+                </Button>
+                <Button variant="outline" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Kijelentkezés
+                </Button>
               </div>
-              <ThemeToggle />
-              <Button variant="outline" onClick={() => navigate("/members")}>
-                <Users className="mr-2 h-4 w-4" />
-                Csapattagok
-              </Button>
-              <Button variant="outline" onClick={() => navigate("/profile")}>
-                <UserIcon className="mr-2 h-4 w-4" />
-                Profil
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Kijelentkezés
-              </Button>
-            </div>
+            )}
+            
+            {/* Mobile Navigation */}
+            {isMobile && (
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                    <div className="flex flex-col gap-6 mt-6">
+                      <div className="flex items-center gap-3 pb-4 border-b">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={userProfile?.avatar_url ? getAvatarUrl(userProfile.avatar_url) || undefined : undefined} />
+                          <AvatarFallback className="bg-primary/10">
+                            <UserIcon className="h-6 w-6 text-primary" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          {(userProfile?.full_name || user?.user_metadata?.full_name) && (
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {userProfile?.full_name || user?.user_metadata?.full_name}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user?.email}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-2">
+                        <Button 
+                          variant="outline" 
+                          className="justify-start" 
+                          onClick={() => {
+                            navigate("/members");
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Csapattagok
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="justify-start"
+                          onClick={() => {
+                            navigate("/profile");
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          <UserIcon className="mr-2 h-4 w-4" />
+                          Profil
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="justify-start"
+                          onClick={() => {
+                            handleLogout();
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Kijelentkezés
+                        </Button>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex justify-between items-center">
+      <main className="container mx-auto px-4 py-4 md:py-8">
+        <div className="mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-xl font-semibold">Alkatrészek</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-lg md:text-xl font-semibold">Alkatrészek</h2>
+            <p className="text-xs md:text-sm text-muted-foreground">
               {filteredParts.length} alkatrész {searchTerm || statusFilter !== "all" || departmentFilter !== "all" ? "szűrve" : "összesen"}
             </p>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button onClick={() => setIsDialogOpen(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Új alkatrész
           </Button>
@@ -238,9 +318,9 @@ const Dashboard = () => {
       </main>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg md:text-xl">
               {editingPart ? "Alkatrész szerkesztése" : "Új alkatrész létrehozása"}
             </DialogTitle>
           </DialogHeader>

@@ -251,15 +251,15 @@ const Profile = () => {
       </AlertDialog>
 
       <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Profil</h1>
-              <p className="text-sm text-muted-foreground">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">Profil</h1>
+              <p className="text-xs md:text-sm text-muted-foreground">
                 Személyes adatok és beállítások
               </p>
             </div>
@@ -267,26 +267,26 @@ const Profile = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+      <main className="container mx-auto px-4 py-4 md:py-8 max-w-2xl">
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
+            <div className="flex items-center gap-3 md:gap-4">
+              <Avatar className="h-12 w-12 md:h-16 md:w-16">
                 <AvatarImage src={avatarUrl ? getAvatarUrl(avatarUrl) || undefined : undefined} />
                 <AvatarFallback className="bg-primary/10">
-                  <User className="h-8 w-8 text-primary" />
+                  <User className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <CardTitle>Felhasználói adatok</CardTitle>
-                <CardDescription>
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-base md:text-lg">Felhasználói adatok</CardTitle>
+                <CardDescription className="text-xs md:text-sm">
                   Kezeld a személyes információidat
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSave} className="space-y-6">
+            <form onSubmit={handleSave} className="space-y-4 md:space-y-6">
               <div className="space-y-2">
                 <Label>Profilkép</Label>
                 {avatarUrl ? (

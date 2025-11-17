@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Edit, Trash2, ArrowUpDown, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { PartDetailsDialog } from "./PartDetailsDialog";
 import { MemberProfileDialog } from "./MemberProfileDialog";
 import {
@@ -64,6 +66,7 @@ interface TaskTableProps {
 export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [selectedPart, setSelectedPart] = useState<Part | null>(null);
@@ -165,6 +168,115 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
     }
   };
 
+  // Mobile Card View
+  if (isMobile) {
+    return (
+      <>
+        <div className="space-y-4">
+          {sortedParts.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                Nincs megjeleníthető alkatrész
+              </CardContent>
+            </Card>
+          ) : (
+            sortedParts.map((part) => (
+              <Card key={part.id} className="overflow-hidden">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-base truncate">{part.name}</h3>
+                      <p className="text-xs text-muted-foreground">{part.part_number}</p>
+                    </div>
+                    {getStatusBadge(part.status)}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Részleg</p>
+                      <p className="font-medium">{part.department}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Létrehozta</p>
+                      {part.profiles?.full_name ? (
+                        <button
+                          onClick={() => part.created_by && handleCreatorClick(part.created_by)}
+                          className="font-medium text-primary hover:underline text-left truncate w-full"
+                        >
+                          {part.profiles.full_name}
+                        </button>
+                      ) : (
+                        <p className="text-muted-foreground">Ismeretlen</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 pt-2 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedPart(part)}
+                      className="flex-1"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Részletek
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(part)}
+                      className="flex-1"
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Szerkesztés
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPartToDelete(part.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        <PartDetailsDialog
+          part={selectedPart}
+          open={!!selectedPart}
+          onOpenChange={(open) => !open && setSelectedPart(null)}
+          onCreatorClick={handleCreatorClick}
+        />
+
+        <MemberProfileDialog
+          userId={selectedUserId}
+          open={isMemberDialogOpen}
+          onOpenChange={setIsMemberDialogOpen}
+          onPartClick={handlePartClickFromMemberDialog}
+        />
+
+        <AlertDialog open={!!partToDelete} onOpenChange={() => setPartToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Biztosan törölni szeretnéd?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Ez a művelet nem vonható vissza. Az alkatrész véglegesen törlődik az adatbázisból.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Mégse</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>Törlés</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
+  }
+
+  // Desktop Table View
   return (
     <>
       <div className="rounded-md border bg-card overflow-x-auto">
