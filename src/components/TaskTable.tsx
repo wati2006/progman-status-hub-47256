@@ -3,7 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Edit, Trash2, ArrowUpDown, Eye } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Edit, Trash2, ArrowUpDown, Eye, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -172,6 +173,35 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
   if (isMobile) {
     return (
       <>
+        <div className="mb-4 flex gap-2">
+          <Select
+            value={sortField}
+            onValueChange={(value) => setSortField(value as SortField)}
+          >
+            <SelectTrigger className="flex-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="part_number">Rajzszám</SelectItem>
+              <SelectItem value="name">Megnevezés</SelectItem>
+              <SelectItem value="department">Részleg</SelectItem>
+              <SelectItem value="status">Státusz</SelectItem>
+              <SelectItem value="created_at">Létrehozva</SelectItem>
+              <SelectItem value="updated_at">Módosítva</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+          >
+            {sortDirection === "asc" ? (
+              <ArrowUpIcon className="h-4 w-4" />
+            ) : (
+              <ArrowDownIcon className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
         <div className="space-y-4">
           {sortedParts.length === 0 ? (
             <Card>
