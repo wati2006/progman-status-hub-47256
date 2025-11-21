@@ -193,15 +193,15 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-w-2xl w-[calc(100vw-2rem)] mx-4">
           <DialogHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <DialogTitle className="text-2xl">{part.name}</DialogTitle>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="font-mono">{part.part_number}</span>
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+              <div className="flex-1 min-w-0 w-full">
+                <DialogTitle className="text-xl sm:text-2xl">{part.name}</DialogTitle>
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span className="font-mono text-xs sm:text-sm">{part.part_number}</span>
                   <span>•</span>
-                  <span>{part.department}</span>
+                  <span className="text-xs sm:text-sm">{part.department}</span>
                   <span>•</span>
                   {getStatusBadge(part.status)}
                 </div>
@@ -210,7 +210,7 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
                 variant="outline"
                 size="sm"
                 onClick={() => setIsHistoryOpen(true)}
-                className="ml-4 mr-8"
+                className="w-full sm:w-auto sm:ml-4 sm:mr-8"
               >
                 <History className="h-4 w-4 mr-2" />
                 Történet
@@ -218,7 +218,7 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
             </div>
           </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {part.description && (
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -231,7 +231,7 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
 
           <Separator />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Package className="h-4 w-4 text-muted-foreground" />
@@ -304,19 +304,20 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
                     return (
                       <div key={category} className="border rounded-lg p-3">
                         <h4 className="text-sm font-semibold mb-2">{getCategoryLabel(category, 1)}</h4>
-                        <div className="flex items-center justify-between p-2 border rounded-md bg-muted/30">
-                          <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 border rounded-md bg-muted/30">
+                          <div className="flex-1 min-w-0 w-full">
                             <p className="text-sm font-medium">Verzió: {file.version}</p>
                             <p className="text-xs text-muted-foreground">
                               Feltöltve: {formatDate(file.created_at)}
                             </p>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 w-full sm:w-auto">
                             {canPreview(category, file.file_url) && (
                               <Button 
                                 variant="ghost" 
                                 size="sm"
                                 onClick={() => handlePreview(file.file_url, category, file.version)}
+                                className="flex-1 sm:flex-initial"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -325,6 +326,7 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
                               variant="ghost" 
                               size="sm"
                               onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
+                              className="flex-1 sm:flex-initial"
                             >
                               <Download className="h-4 w-4" />
                             </Button>
@@ -344,22 +346,23 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
                         <AccordionContent className="px-3">
                           <div className="space-y-2">
                             {categoryFiles.map((file) => (
-                              <div 
+                        <div 
                                 key={file.id} 
-                                className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/50 transition-colors"
+                                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 border rounded-md hover:bg-muted/50 transition-colors"
                               >
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0 w-full">
                                   <p className="text-sm font-medium">Verzió: {file.version}</p>
                                   <p className="text-xs text-muted-foreground">
                                     Feltöltve: {formatDate(file.created_at)}
                                   </p>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 w-full sm:w-auto">
                                   {canPreview(category, file.file_url) && (
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
                                       onClick={() => handlePreview(file.file_url, category, file.version)}
+                                      className="flex-1 sm:flex-initial"
                                     >
                                       <Eye className="h-4 w-4" />
                                     </Button>
@@ -368,6 +371,7 @@ export const PartDetailsDialog = ({ part, open, onOpenChange, onCreatorClick }: 
                                     variant="ghost" 
                                     size="sm"
                                     onClick={() => downloadFile(file.file_url, `${category}_v${file.version}`)}
+                                    className="flex-1 sm:flex-initial"
                                   >
                                     <Download className="h-4 w-4" />
                                   </Button>
