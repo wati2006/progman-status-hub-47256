@@ -198,15 +198,16 @@ export const TaskTable = ({ parts, onEdit }: TaskTableProps) => {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Létrehozta</p>
+                      <p className="text-xs font-medium mb-1">{formatDate(part.created_at)}</p>
                       {part.profiles?.full_name ? (
                         <button
                           onClick={() => part.created_by && handleCreatorClick(part.created_by)}
-                          className="font-medium text-primary hover:underline text-left truncate w-full"
+                          className="text-xs text-primary hover:underline text-left truncate w-full"
                         >
                           {part.profiles.full_name}
                         </button>
                       ) : (
-                        <p className="text-muted-foreground">Ismeretlen</p>
+                        <p className="text-xs text-muted-foreground">Ismeretlen</p>
                       )}
                     </div>
                   </div>
