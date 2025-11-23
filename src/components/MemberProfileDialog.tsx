@@ -50,7 +50,7 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
 
   const loadProfile = async () => {
     if (!userId) return;
-    
+
     setIsLoadingProfile(true);
     try {
       const { data, error } = await supabase
@@ -74,7 +74,7 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
 
   const loadParts = async () => {
     if (!userId) return;
-    
+
     setIsLoadingParts(true);
     try {
       const { data, error } = await supabase
@@ -98,7 +98,7 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
 
   const getAvatarUrl = (path: string | null) => {
     if (!path) return null;
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
     return data.publicUrl;
   };
 
@@ -108,7 +108,7 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
       gyartas_alatt: "Gyártás alatt",
       kesz: "Kész",
       jovahagyasra_var: "Jóváhagyásra vár",
-      elutasitva: "Elutasítva"
+      elutasitva: "Elutasítva",
     };
     return labels[status];
   };
@@ -117,10 +117,10 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
     return new Date(dateString).toLocaleDateString("hu-HU");
   };
 
-  if (!profile) {
+  if (!profile || isLoadingProfile) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] overflow-y-auto p-4">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="sr-only">Profil betöltése</DialogTitle>
             <DialogDescription className="sr-only">
@@ -137,12 +137,12 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] overflow-y-auto p-4">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Avatar className="h-12 w-12 sm:h-16 sm:w-16">
-              <AvatarImage 
-                src={profile.avatar_url ? getAvatarUrl(profile.avatar_url) || undefined : undefined} 
+              <AvatarImage
+                src={profile.avatar_url ? getAvatarUrl(profile.avatar_url) || undefined : undefined}
               />
               <AvatarFallback className="bg-primary/10">
                 <UserIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
@@ -198,39 +198,66 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
             ) : parts.length === 0 ? (
               <p className="text-sm text-muted-foreground">Még nem adott hozzá alkatrészt.</p>
             ) : (
-              <div className="border rounded-lg overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Rajzszám</TableHead>
-                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Megnevezés</TableHead>
-                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Részleg</TableHead>
-                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Státusz</TableHead>
-                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Létrehozva</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {parts.map((part) => (
-                      <TableRow 
-                        key={part.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => {
-                          onPartClick?.(part.id);
-                          onOpenChange(false);
-                        }}
-                      >
-                        <TableCell className="font-mono text-sm whitespace-normal sm:whitespace-nowrap">{part.part_number}</TableCell>
-                        <TableCell className="whitespace-normal sm:whitespace-nowrap">{part.name}</TableCell>
-                        <TableCell className="whitespace-normal sm:whitespace-nowrap">{part.department}</TableCell>
-                        <TableCell className="whitespace-normal sm:whitespace-nowrap">{getStatusLabel(part.status)}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm whitespace-normal sm:whitespace-nowrap">
-                          {formatDate(part.created_at)}
-                        </TableCell>
+              <>
+                {/* Mobil nézet: kártyás lista, nincs vízszintes görgetés */}
+                <div className="space-y-3 sm:hidden">
+                  {parts.map((part) => (
+                    <div
+                      key={part.id}
+                      className="cursor-pointer rounded-lg border bg-background p-3 text-left text-sm hover:bg-muted/50"
+                      onClick={() => {
+                        onPartClick?.(part.id);
+                        onOpenChange(false);
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-xs font-semibold">{part.part_number}</span>
+                        <span className="text-xs text-muted-foreground">{formatDate(part.created_at)}</span>
+                      </div>
+                      <div className="mt-1 text-sm font-medium">{part.name}</div>
+                      <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <span>{part.department}</span>
+                        <span>• {getStatusLabel(part.status)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tablet / desktop nézet: hagyományos táblázat */}
+                <div className="hidden sm:block border rounded-lg overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-normal sm:whitespace-nowrap">Rajzszám</TableHead>
+                        <TableHead className="whitespace-normal sm:whitespace-nowrap">Megnevezés</TableHead>
+                        <TableHead className="whitespace-normal sm:whitespace-nowrap">Részleg</TableHead>
+                        <TableHead className="whitespace-normal sm:whitespace-nowrap">Státusz</TableHead>
+                        <TableHead className="whitespace-normal sm:whitespace-nowrap">Létrehozva</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {parts.map((part) => (
+                        <TableRow
+                          key={part.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => {
+                            onPartClick?.(part.id);
+                            onOpenChange(false);
+                          }}
+                        >
+                          <TableCell className="font-mono text-sm whitespace-normal sm:whitespace-nowrap">{part.part_number}</TableCell>
+                          <TableCell className="whitespace-normal sm:whitespace-nowrap">{part.name}</TableCell>
+                          <TableCell className="whitespace-normal sm:whitespace-nowrap">{part.department}</TableCell>
+                          <TableCell className="whitespace-normal sm:whitespace-nowrap">{getStatusLabel(part.status)}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm whitespace-normal sm:whitespace-nowrap">
+                            {formatDate(part.created_at)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </div>
         </div>
