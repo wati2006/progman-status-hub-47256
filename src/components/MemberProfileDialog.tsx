@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -120,7 +120,13 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
   if (!profile) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] overflow-y-auto p-4">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Profil betöltése</DialogTitle>
+            <DialogDescription className="sr-only">
+              Csapattag profiljának betöltése folyamatban.
+            </DialogDescription>
+          </DialogHeader>
           <div className="flex items-center justify-center py-8">
             <p className="text-muted-foreground">Betöltés...</p>
           </div>
@@ -131,7 +137,7 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[90vh] overflow-y-auto p-4">
         <DialogHeader>
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Avatar className="h-12 w-12 sm:h-16 sm:w-16">
@@ -154,6 +160,10 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
             </div>
           </div>
         </DialogHeader>
+
+        <DialogDescription className="sr-only">
+          Csapattag profilja és az általa hozzáadott alkatrészek listája.
+        </DialogDescription>
 
         <div className="space-y-6">
           <div className="space-y-3">
@@ -192,11 +202,11 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="whitespace-nowrap">Rajzszám</TableHead>
-                      <TableHead className="whitespace-nowrap">Megnevezés</TableHead>
-                      <TableHead className="whitespace-nowrap">Részleg</TableHead>
-                      <TableHead className="whitespace-nowrap">Státusz</TableHead>
-                      <TableHead className="whitespace-nowrap">Létrehozva</TableHead>
+                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Rajzszám</TableHead>
+                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Megnevezés</TableHead>
+                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Részleg</TableHead>
+                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Státusz</TableHead>
+                      <TableHead className="whitespace-normal sm:whitespace-nowrap">Létrehozva</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -209,11 +219,11 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
                           onOpenChange(false);
                         }}
                       >
-                        <TableCell className="font-mono text-sm whitespace-nowrap">{part.part_number}</TableCell>
-                        <TableCell className="whitespace-nowrap">{part.name}</TableCell>
-                        <TableCell className="whitespace-nowrap">{part.department}</TableCell>
-                        <TableCell className="whitespace-nowrap">{getStatusLabel(part.status)}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                        <TableCell className="font-mono text-sm whitespace-normal sm:whitespace-nowrap">{part.part_number}</TableCell>
+                        <TableCell className="whitespace-normal sm:whitespace-nowrap">{part.name}</TableCell>
+                        <TableCell className="whitespace-normal sm:whitespace-nowrap">{part.department}</TableCell>
+                        <TableCell className="whitespace-normal sm:whitespace-nowrap">{getStatusLabel(part.status)}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm whitespace-normal sm:whitespace-nowrap">
                           {formatDate(part.created_at)}
                         </TableCell>
                       </TableRow>
