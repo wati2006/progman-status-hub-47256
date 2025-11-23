@@ -120,7 +120,7 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
   if (!profile) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[calc(100vw-2rem)] mx-4 sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <div className="flex items-center justify-center py-8">
             <p className="text-muted-foreground">Betöltés...</p>
           </div>
@@ -131,7 +131,7 @@ export const MemberProfileDialog = ({ userId, open, onOpenChange, onPartClick }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] mx-4 sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Avatar className="h-12 w-12 sm:h-16 sm:w-16">
