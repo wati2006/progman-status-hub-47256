@@ -15,8 +15,25 @@ const Auth = () => {
   const [department, setDepartment] = useState("");
   const [discordProfile, setDiscordProfile] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Email elküldve!", description: "Nézd meg a postaládádat a jelszó-visszaállító linkért." });
+      setShowForgotPassword(false);
+    }
+    setLoading(false);
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,10 +132,41 @@ const Auth = () => {
                     required
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Elfelejtett jelszó?
+                </button>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Betöltés..." : "Bejelentkezés"}
                 </Button>
               </form>
+              {showForgotPassword && (
+                <div className="mt-4 border-t pt-4">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Add meg az email címedet, és küldünk egy jelszó-visszaállító linket.
+                  </p>
+                  <form onSubmit={handleForgotPassword} className="space-y-3">
+                    <Input
+                      type="email"
+                      placeholder="pelda@email.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                    />
+                    <div className="flex gap-2">
+                      <Button type="submit" className="flex-1" disabled={loading}>
+                        {loading ? "Küldés..." : "Link küldése"}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setShowForgotPassword(false)}>
+                        Mégse
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
